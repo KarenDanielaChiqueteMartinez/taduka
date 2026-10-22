@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { supabasePublishableKey, supabaseUrl } from "./env";
 
 const AUTH_ROUTES = ["/login", "/register"];
-const PROTECTED_ROUTES = ["/dashboard"];
+const PROTECTED_ROUTES = ["/dashboard", "/products", "/categories"];
 
 function matches(pathname: string, routes: string[]) {
   return routes.some((r) => pathname === r || pathname.startsWith(`${r}/`));

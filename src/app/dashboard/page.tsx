@@ -1,69 +1,44 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
 import { connection } from "next/server";
-import { signOut } from "@/lib/auth/actions";
-import { createClient } from "@/lib/supabase/server";
+import { ROLE_LABELS, getCurrentContext } from "@/lib/stores/context";
+import { AppShell } from "@/components/app/app-shell";
+import { LoadingState } from "@/components/app/page-states";
 import { CreateStoreForm } from "@/components/stores/create-store-form";
-import { SubmitButton } from "@/components/ui/submit-button";
 
 export const metadata: Metadata = { title: "Inicio · TADUKA" };
 
-type Membership = {
-  role: "owner" | "staff";
-  stores: { id: string; name: string } | null;
-};
-
-const ROLE_LABELS: Record<Membership["role"], string> = {
-  owner: "Propietario",
-  staff: "Personal",
-};
-
 export default function DashboardPage() {
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-8">
-      <Suspense
-        fallback={
-          <p role="status" className="text-sm text-text-secondary">
-            Cargando tu sesión…
-          </p>
-        }
-      >
+    <AppShell>
+      <Suspense fallback={<LoadingState />}>
         <CurrentUser />
       </Suspense>
-    </main>
+    </AppShell>
   );
 }
+
+const SECTIONS = [
+  {
+    href: "/products",
+    title: "Productos",
+    description: "Tu catálogo: nombre, categoría y unidad de medida.",
+  },
+  {
+    href: "/categories",
+    title: "Categorías",
+    description: "Agrupa tus productos para encontrarlos más rápido.",
+  },
+];
 
 async function CurrentUser() {
   // Supabase Auth usa Date.now() (vigencia del token); debe ejecutarse en la petición.
   await connection();
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) redirect("/login");
-
-  // RLS limita el resultado a las tiendas del usuario autenticado.
-  const { data: memberships, error: storeError } = await supabase
-    .from("store_members")
-    .select("role, stores(id, name)")
-    .order("created_at", { ascending: true })
-    .limit(1);
-  const membership = (memberships?.[0] ?? null) as Membership | null;
+  const { user, membership, storeError } = await getCurrentContext();
 
   return (
-    <section className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <p className="flex items-center gap-2 text-xl font-semibold tracking-tight text-primary">
-          <span aria-hidden="true" className="size-2.5 rounded-full bg-accent" />
-          TADUKA
-        </p>
-        <form action={signOut}>
-          <SubmitButton variant="secondary" pendingLabel="Cerrando sesión…">
-            Cerrar sesión
-          </SubmitButton>
-        </form>
-      </header>
-
+    <>
       <div className="rounded-card border border-border bg-surface p-4 sm:p-6">
         {storeError ? (
           <>
@@ -88,12 +63,9 @@ async function CurrentUser() {
               </div>
               <div>
                 <dt className="text-text-secondary">Sesión de</dt>
-                <dd className="break-all font-medium">{data.user.email}</dd>
+                <dd className="break-all font-medium">{user.email}</dd>
               </div>
             </dl>
-            <p className="mt-4 rounded-control bg-surface-muted px-3 py-2.5 text-sm text-text-secondary">
-              Página provisional. Próximamente podrás registrar productos y lotes.
-            </p>
           </>
         ) : (
           <>
@@ -108,6 +80,24 @@ async function CurrentUser() {
           </>
         )}
       </div>
-    </section>
+
+      {membership?.stores && (
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {SECTIONS.map((s) => (
+            <li key={s.href}>
+              <Link
+                href={s.href}
+                className="block h-full rounded-card border border-border bg-surface p-4 transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-primary"
+              >
+                <span className="font-semibold">{s.title}</span>
+                <span className="mt-1 block text-sm text-text-secondary">
+                  {s.description}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
   );
 }

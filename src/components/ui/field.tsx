@@ -1,6 +1,6 @@
 import type { InputHTMLAttributes } from "react";
 
-const inputClass =
+export const inputClass =
   "h-11 w-full rounded-control border border-border bg-surface px-3 text-base text-text-primary transition-colors placeholder:text-text-secondary focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-primary aria-[invalid=true]:border-danger";
 
 type Props = {
