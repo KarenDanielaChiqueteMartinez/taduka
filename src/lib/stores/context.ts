@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export type Membership = {
   role: "owner" | "staff";
-  stores: { id: string; name: string } | null;
+  stores: { id: string; name: string; expiry_alert_days: number } | null;
 };
 
 export const ROLE_LABELS: Record<Membership["role"], string> = {
@@ -21,7 +21,7 @@ export async function getCurrentContext() {
 
   const { data: memberships, error: storeError } = await supabase
     .from("store_members")
-    .select("role, stores(id, name)")
+    .select("role, stores(id, name, expiry_alert_days)")
     .order("created_at", { ascending: true })
     .limit(1);
 

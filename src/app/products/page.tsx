@@ -101,6 +101,12 @@ async function Products() {
                         ? "Sin lotes"
                         : `${lotCount} ${lotCount === 1 ? "lote" : "lotes"}`}
                     </p>
+                    <Link
+                      href={`/lots?product=${p.id}`}
+                      className="font-medium text-primary underline-offset-4 hover:underline"
+                    >
+                      {lotCount === 0 ? "Registrar lote" : "Ver lotes"}
+                    </Link>
                     {!p.is_active && (
                       <p className="text-text-secondary">Inactivo</p>
                     )}
