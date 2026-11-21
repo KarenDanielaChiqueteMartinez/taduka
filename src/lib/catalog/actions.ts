@@ -1,13 +1,21 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { savePhoto } from "@/lib/catalog/photos-server";
 import { isUnit } from "@/lib/catalog/units";
+import {
+  createCategory as createCategory_,
+  createProduct as createProduct_,
+} from "@/lib/db/catalog";
+import { isCheckViolation, isDuplicate, isForeignKey } from "@/lib/db/pool";
 import { getCurrentContext } from "@/lib/stores/context";
 
 export type CatalogFormState = {
   values?: { name?: string; categoryId?: string; unit?: string };
   error?: string;
   success?: string;
+  // Aviso no bloqueante (p. ej. el producto se creó pero la foto no se pudo guardar).
+  warning?: string;
   fieldErrors?: Partial<Record<"name" | "categoryId" | "unit", string>>;
 };
 
@@ -17,7 +25,6 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const NO_STORE = "Primero crea tu tienda desde el inicio.";
-const NO_PERMISSION = "No tienes permiso para realizar esta acción.";
 const GENERIC = "No pudimos guardar los cambios. Inténtalo de nuevo.";
 
 export async function createCategory(
@@ -35,18 +42,19 @@ export async function createCategory(
     };
   }
 
-  const { supabase, membership } = await getCurrentContext();
-  if (!membership?.stores) return { values, error: NO_STORE };
+  const { membership } = await getCurrentContext();
+  if (!membership) return { values, error: NO_STORE };
 
-  const { error } = await supabase
-    .from("categories")
-    .insert({ store_id: membership.stores.id, name });
-
-  if (error) {
-    if (error.code === "23505") {
+  try {
+    await createCategory_(membership.store.id, name);
+  } catch (error) {
+    if (isDuplicate(error)) {
       return { values, fieldErrors: { name: "Ya tienes una categoría con ese nombre." } };
     }
-    return { values, error: error.code === "42501" ? NO_PERMISSION : GENERIC };
+    if (isCheckViolation(error)) {
+      return { values, fieldErrors: { name: "Escribe un nombre válido." } };
+    }
+    return { values, error: GENERIC };
   }
 
   revalidatePath("/categories");
@@ -74,33 +82,41 @@ export async function createProduct(
   }
   if (Object.keys(fieldErrors).length > 0) return { values, fieldErrors };
 
-  const { supabase, membership } = await getCurrentContext();
-  if (!membership?.stores) return { values, error: NO_STORE };
+  const { membership } = await getCurrentContext();
+  if (!membership) return { values, error: NO_STORE };
 
   // La FK compuesta (category_id, store_id) impide usar categorías de otra tienda.
-  const { error } = await supabase.from("products").insert({
-    store_id: membership.stores.id,
-    category_id: categoryId || null,
-    name,
-    unit,
-  });
+  let createdId: string;
+  try {
+    createdId = await createProduct_(membership.store.id, {
+      categoryId: categoryId || null,
+      name,
+      unit,
+    });
+  } catch (error) {
+    if (isDuplicate(error)) {
+      return { values, fieldErrors: { name: "Ya tienes un producto con ese nombre." } };
+    }
+    if (isForeignKey(error)) {
+      return { values, fieldErrors: { categoryId: "La categoría seleccionada no es válida." } };
+    }
+    return { values, error: GENERIC };
+  }
 
-  if (error) {
-    switch (error.code) {
-      case "23505":
-        return { values, fieldErrors: { name: "Ya tienes un producto con ese nombre." } };
-      case "23503":
-        return {
-          values,
-          fieldErrors: { categoryId: "La categoría seleccionada no es válida." },
-        };
-      case "42501":
-        return { values, error: NO_PERMISSION };
-      default:
-        return { values, error: GENERIC };
+  // Foto opcional: si falla, el producto ya existe y se avisa sin deshacerlo.
+  let warning: string | undefined;
+  const photo = formData.get("photo");
+  if (photo instanceof File && photo.size > 0) {
+    const saved = await savePhoto(membership.store.id, createdId, photo);
+    if (!saved.ok) {
+      warning = `El producto se creó, pero la foto no se guardó: ${saved.error} Puedes agregarla desde su ficha.`;
     }
   }
 
   revalidatePath("/products");
-  return { values: { name: "", categoryId, unit }, success: `Producto «${name}» creado.` };
+  return {
+    values: { name: "", categoryId, unit },
+    success: `Producto «${name}» creado.`,
+    warning,
+  };
 }

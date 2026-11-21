@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { isCheckViolation, isForeignKey } from "@/lib/db/pool";
+import { createLot as insertLot } from "@/lib/db/lots";
 import { getCurrentContext } from "@/lib/stores/context";
 
 export type LotFormState = {
@@ -63,35 +65,28 @@ export async function createLot(
   }
   if (Object.keys(fieldErrors).length > 0) return { values, fieldErrors };
 
-  const { supabase, membership } = await getCurrentContext();
-  if (!membership?.stores) {
+  const { membership } = await getCurrentContext();
+  if (!membership) {
     return { values, error: "Primero crea tu tienda desde el inicio." };
   }
 
-  // current_quantity la fija un trigger; la FK compuesta liga el producto a la tienda.
-  const { error } = await supabase.from("lots").insert({
-    store_id: membership.stores.id,
-    product_id: productId,
-    supplier_lot_code: supplierLotCode || null,
-    entry_date: entryDate,
-    expiration_date: expirationDate,
-    initial_quantity: quantity,
-  });
-
-  if (error) {
-    switch (error.code) {
-      case "23503":
-        return { values, fieldErrors: { productId: "El producto seleccionado no es válido." } };
-      case "23514":
-        return { values, error: "Revisa las fechas y la cantidad del lote." };
-      case "22007":
-      case "22008":
-        return { values, error: "Alguna de las fechas no es válida." };
-      case "42501":
-        return { values, error: "No tienes permiso para registrar lotes." };
-      default:
-        return { values, error: "No pudimos guardar el lote. Inténtalo de nuevo." };
+  // La existencia actual la fija un trigger; la FK compuesta liga el producto a la tienda.
+  try {
+    await insertLot(membership.store.id, {
+      productId,
+      supplierLotCode: supplierLotCode || null,
+      entryDate,
+      expirationDate,
+      quantity,
+    });
+  } catch (error) {
+    if (isForeignKey(error)) {
+      return { values, fieldErrors: { productId: "El producto seleccionado no es válido." } };
     }
+    if (isCheckViolation(error)) {
+      return { values, error: "Revisa las fechas y la cantidad del lote." };
+    }
+    return { values, error: "No pudimos guardar el lote. Inténtalo de nuevo." };
   }
 
   revalidatePath("/lots");

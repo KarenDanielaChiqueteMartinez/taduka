@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { signIn, signUp, type AuthState } from "@/lib/auth/actions";
 import { Field } from "@/components/ui/field";
+import { Icon } from "@/components/ui/icons";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 type Props = { mode: "login" | "register" };
@@ -19,16 +20,18 @@ export function AuthForm({ mode }: Props) {
       {state.error && (
         <p
           role="alert"
-          className="rounded-control bg-danger-soft px-3 py-2.5 text-sm text-danger"
+          className="flex items-start gap-2 rounded-control bg-danger-soft px-3.5 py-3 text-sm font-medium text-danger"
         >
+          <Icon name="alert-triangle" className="mt-0.5 size-4" />
           {state.error}
         </p>
       )}
       {state.message && (
         <p
           role="status"
-          className="rounded-control bg-primary-soft px-3 py-2.5 text-sm text-primary"
+          className="flex items-start gap-2 rounded-control bg-action-soft px-3.5 py-3 text-sm font-semibold text-action"
         >
+          <Icon name="check-circle" className="mt-0.5 size-4" />
           {state.message}
         </p>
       )}
@@ -65,6 +68,7 @@ export function AuthForm({ mode }: Props) {
 
       <SubmitButton
         pendingLabel={isRegister ? "Creando cuenta…" : "Entrando…"}
+        size="lg"
         className="w-full"
       >
         {isRegister ? "Crear cuenta" : "Iniciar sesión"}

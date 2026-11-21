@@ -16,13 +16,13 @@ export function SelectField({ id, label, error, hint, children, ...select }: Pro
 
   return (
     <div className="space-y-1.5">
-      <label htmlFor={id} className="text-sm font-medium">
+      <label htmlFor={id} className="text-sm font-semibold text-text-primary">
         {label}
       </label>
       <select
         id={id}
         name={id}
-        className={inputClass}
+        className={`${inputClass} appearance-none bg-[length:1.1rem] bg-[right_1rem_center] bg-no-repeat pr-11 bg-[url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2366736c' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>")]`}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy || undefined}
         {...select}
@@ -35,7 +35,7 @@ export function SelectField({ id, label, error, hint, children, ...select }: Pro
         </p>
       )}
       {error && (
-        <p id={`${id}-error`} className="text-sm text-danger">
+        <p id={`${id}-error`} className="text-sm font-medium text-danger">
           {error}
         </p>
       )}

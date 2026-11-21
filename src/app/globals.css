@@ -1,26 +1,43 @@
 @import "tailwindcss";
 
-/* Tokens semánticos de TADUKA_Premium_UI_Design.md */
+/* Tokens semánticos de TADUKA (TADUKA_Premium_UI_Design.md + rediseño móvil). */
 @theme {
+  /* Verde oscuro: marca, encabezados, énfasis */
   --color-primary: #075747;
   --color-primary-hover: #06483c;
+  --color-primary-deep: #0e3b2f;
   --color-primary-soft: #dcefe7;
+  /* Verde intenso: acciones principales y estados positivos */
+  --color-action: #0a8a47;
+  --color-action-hover: #087a3f;
+  --color-action-soft: #e3f5ea;
   --color-accent: #b7ec4b;
+  /* Degradado del encabezado y color de la navegación activa */
+  --color-hero-from: #1e8c4c;
+  --color-hero-to: #054d22;
+  /* Crema, superficies y texto */
   --color-background: #f7f6f1;
   --color-surface: #ffffff;
   --color-surface-muted: #f1f3ef;
   --color-text-primary: #17211d;
-  --color-text-secondary: #66736c;
+  --color-text-secondary: #5d6a63;
   --color-border: #e1e6e1;
+  /* Estados */
   --color-success: #247a52;
   --color-warning: #a96812;
   --color-warning-soft: #fff2d8;
+  --color-orange: #b3480a;
+  --color-orange-soft: #ffe8da;
   --color-danger: #b93838;
   --color-danger-soft: #fde8e7;
 
-  --radius-control: 10px;
-  --radius-card: 16px;
-  --radius-panel: 20px;
+  --radius-control: 14px;
+  --radius-card: 20px;
+  --radius-panel: 24px;
+
+  --shadow-card: 0 1px 2px rgb(16 40 30 / 0.05), 0 6px 18px rgb(16 40 30 / 0.06);
+  --shadow-float: 0 8px 24px rgb(7 87 71 / 0.28);
+  --shadow-nav: 0 -6px 24px rgb(16 40 30 / 0.08);
 }
 
 @theme inline {
@@ -32,4 +49,33 @@ body {
   background: var(--color-background);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Transiciones sutiles al entrar a una pantalla; se desactivan con reduce-motion. */
+@keyframes tadu-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.tadu-rise {
+  animation: tadu-rise 0.28s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tadu-rise {
+    animation: none;
+  }
+}
+
+/* Oculta la barra de desplazamiento de filtros horizontales sin perder el desplazamiento. */
+.tadu-scroll-x {
+  scrollbar-width: none;
+}
+.tadu-scroll-x::-webkit-scrollbar {
+  display: none;
 }

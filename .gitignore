@@ -42,6 +42,3 @@ next-env.d.ts
 
 # Plantilla de variables de entorno
 !.env.example
-
-# Archivos temporales de Supabase CLI
-/supabase/.temp/

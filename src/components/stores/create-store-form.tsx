@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { createFirstStore, type StoreFormState } from "@/lib/stores/actions";
 import { Field } from "@/components/ui/field";
+import { Icon } from "@/components/ui/icons";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 export function CreateStoreForm() {
@@ -16,8 +17,9 @@ export function CreateStoreForm() {
       {state.error && (
         <p
           role="alert"
-          className="rounded-control bg-danger-soft px-3 py-2.5 text-sm text-danger"
+          className="flex items-start gap-2 rounded-control bg-danger-soft px-3.5 py-3 text-sm font-medium text-danger"
         >
+          <Icon name="alert-triangle" className="mt-0.5 size-4" />
           {state.error}
         </p>
       )}
@@ -32,8 +34,9 @@ export function CreateStoreForm() {
         defaultValue={state.name}
         error={state.fieldErrors?.name}
       />
-      <SubmitButton pendingLabel="Creando tienda…" className="w-full sm:w-auto">
-        Crear tienda
+      <SubmitButton pendingLabel="Creando tienda…" size="lg" className="w-full">
+        <Icon name="store" className="size-5" />
+        Crear mi tienda
       </SubmitButton>
     </form>
   );

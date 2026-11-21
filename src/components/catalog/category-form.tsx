@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { createCategory, type CatalogFormState } from "@/lib/catalog/actions";
 import { Field } from "@/components/ui/field";
+import { Icon } from "@/components/ui/icons";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 export function CategoryForm() {
@@ -14,12 +15,14 @@ export function CategoryForm() {
   return (
     <form action={action} noValidate className="space-y-4">
       {state.error && (
-        <p role="alert" className="rounded-control bg-danger-soft px-3 py-2.5 text-sm text-danger">
+        <p role="alert" className="flex items-start gap-2 rounded-control bg-danger-soft px-3.5 py-3 text-sm font-medium text-danger">
+          <Icon name="alert-triangle" className="mt-0.5 size-4" />
           {state.error}
         </p>
       )}
       {state.success && (
-        <p role="status" className="rounded-control bg-primary-soft px-3 py-2.5 text-sm text-primary">
+        <p role="status" className="flex items-center gap-2 rounded-control bg-action-soft px-3.5 py-3 text-sm font-semibold text-action">
+          <Icon name="check-circle" className="size-4" />
           {state.success}
         </p>
       )}
@@ -33,7 +36,8 @@ export function CategoryForm() {
         defaultValue={state.values?.name}
         error={state.fieldErrors?.name}
       />
-      <SubmitButton pendingLabel="Guardando…" className="w-full sm:w-auto">
+      <SubmitButton pendingLabel="Guardando…" size="lg" className="w-full">
+        <Icon name="plus" className="size-5" strokeWidth={2.6} />
         Agregar categoría
       </SubmitButton>
     </form>

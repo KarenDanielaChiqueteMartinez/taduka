@@ -1,7 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/auth/session";
+import { countMemberships, createStore } from "@/lib/db/stores";
 
 export type StoreFormState = {
   name?: string;
@@ -25,33 +26,28 @@ export async function createFirstStore(
     };
   }
 
-  const supabase = await createClient();
+  const user = await getSessionUser().catch(() => null);
+  if (!user) redirect("/login");
 
-  // Regla de producto: una tienda activa por ahora; no crear otra si ya pertenece a una.
-  const { data: existing, error: lookupError } = await supabase
-    .from("store_members")
-    .select("store_id")
-    .limit(1);
-  if (lookupError) {
-    return { name, error: "No pudimos verificar tu cuenta. Inténtalo de nuevo." };
-  }
-  if (existing && existing.length > 0) redirect("/dashboard");
-
-  // La función crea la tienda y la membresía de propietario en una transacción.
-  const { error } = await supabase.rpc("create_store", { p_name: name });
-  if (error) {
-    switch (error.code) {
-      case "28000":
-        return { name, error: "Tu sesión expiró. Inicia sesión de nuevo." };
-      case "22023":
-        return {
-          name,
-          fieldErrors: { name: "Escribe un nombre válido de hasta 80 caracteres." },
-        };
-      default:
-        return { name, error: "No pudimos crear tu tienda. Inténtalo de nuevo." };
-    }
+  try {
+    // Regla de producto: una tienda activa por ahora; no crear otra si ya pertenece a una.
+    if ((await countMemberships(user.id)) > 0) redirect("/dashboard");
+    // La tienda y la membresía de propietario se crean en una sola transacción.
+    await createStore(user.id, name);
+  } catch (error) {
+    if (isRedirect(error)) throw error;
+    return { name, error: "No pudimos crear tu tienda. Inténtalo de nuevo." };
   }
 
   redirect("/dashboard");
+}
+
+// redirect() lanza una excepción especial que no debe tratarse como un error.
+function isRedirect(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "digest" in error &&
+    String((error as { digest: unknown }).digest).startsWith("NEXT_REDIRECT")
+  );
 }

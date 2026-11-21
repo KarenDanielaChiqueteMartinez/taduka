@@ -2,25 +2,21 @@
 
 import type { ReactNode } from "react";
 import { useFormStatus } from "react-dom";
+import { buttonClass, type ButtonSize, type ButtonVariant } from "@/components/ui/button";
 
 type Props = {
   children: ReactNode;
   pendingLabel: string;
-  variant?: "primary" | "secondary";
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   className?: string;
-};
-
-const variants = {
-  primary:
-    "bg-primary text-white hover:bg-primary-hover active:bg-primary-hover",
-  secondary:
-    "border border-border bg-surface text-text-primary hover:bg-surface-muted",
 };
 
 export function SubmitButton({
   children,
   pendingLabel,
   variant = "primary",
+  size = "md",
   className = "",
 }: Props) {
   const { pending } = useFormStatus();
@@ -30,7 +26,7 @@ export function SubmitButton({
       type="submit"
       disabled={pending}
       aria-disabled={pending}
-      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-control px-4 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-70 ${variants[variant]} ${className}`}
+      className={buttonClass(variant, size, className)}
     >
       {pending ? (
         <>

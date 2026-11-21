@@ -1,9 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { createProduct, type CatalogFormState } from "@/lib/catalog/actions";
 import { UNITS } from "@/lib/catalog/units";
+import { PhotoPicker } from "@/components/catalog/photo-picker";
 import { Field } from "@/components/ui/field";
+import { Icon } from "@/components/ui/icons";
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 
@@ -16,15 +19,28 @@ export function ProductForm({ categories }: Props) {
   );
 
   return (
-    <form action={action} noValidate className="space-y-4">
+    <form action={action} noValidate className="space-y-5">
       {state.error && (
-        <p role="alert" className="rounded-control bg-danger-soft px-3 py-2.5 text-sm text-danger">
+        <p role="alert" className="flex items-start gap-2 rounded-control bg-danger-soft px-3.5 py-3 text-sm font-medium text-danger">
+          <Icon name="alert-triangle" className="mt-0.5 size-4" />
           {state.error}
         </p>
       )}
       {state.success && (
-        <p role="status" className="rounded-control bg-primary-soft px-3 py-2.5 text-sm text-primary">
-          {state.success}
+        <p role="status" className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-control bg-action-soft px-3.5 py-3 text-sm font-semibold text-action">
+          <span className="inline-flex items-center gap-2">
+            <Icon name="check-circle" className="size-4" />
+            {state.success}
+          </span>
+          <Link href="/products" className="underline underline-offset-4">
+            Ver productos
+          </Link>
+        </p>
+      )}
+      {state.warning && (
+        <p role="status" className="flex items-start gap-2 rounded-control bg-warning-soft px-3.5 py-3 text-sm font-medium text-warning">
+          <Icon name="alert-triangle" className="mt-0.5 size-4" />
+          {state.warning}
         </p>
       )}
       <Field
@@ -68,10 +84,13 @@ export function ProductForm({ categories }: Props) {
           ))}
         </SelectField>
       </div>
-      <p className="text-sm text-text-secondary">
+      <PhotoPicker />
+      <p className="flex items-start gap-2 rounded-control bg-primary-soft/60 px-3.5 py-3 text-sm text-primary">
+        <Icon name="info" className="mt-0.5 size-4" />
         La fecha de caducidad no va en el producto: se registra en cada lote.
       </p>
-      <SubmitButton pendingLabel="Guardando…" className="w-full sm:w-auto">
+      <SubmitButton pendingLabel="Guardando…" size="lg" className="w-full">
+        <Icon name="plus" className="size-5" strokeWidth={2.6} />
         Agregar producto
       </SubmitButton>
     </form>

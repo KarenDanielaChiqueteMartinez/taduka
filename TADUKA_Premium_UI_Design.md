@@ -74,7 +74,7 @@ inventory through physical counts.
 -   Users manually enter or confirm dates and quantities.
 -   Never claim that TADUKA guarantees savings or has proven commercial
     results.
--   Use real Supabase data for implemented screens. Mark mock data
+-   Use real database data for implemented screens. Mark mock data
     clearly when it is only for a design preview.
 
 ## 3. Current implementation scope
@@ -86,7 +86,7 @@ screens. - Dashboard connected to real data. - Product catalog: list,
 create, edit, deactivate. - Lots: create, view, update quantities and
 expiration dates. - Inventory movements: physical counts, adjustments,
 write-offs. - Loading, empty, error, success, and confirmation states. -
-Supabase integration and access control.
+Database integration and access control.
 
 Out of scope for now: - OCR, invoice/receipt scanning, or AI. - Push
 notifications or automatic background alerts. - Payments, subscriptions,
@@ -240,7 +240,7 @@ wordmark placeholder; do not invent a complex logo.
 ### Authentication
 
 Provide sign-in, sign-up, and password recovery screens connected to
-Supabase Auth. Keep them focused and accessible. Show understandable
+session-based auth. Keep them focused and accessible. Show understandable
 Spanish error and success messages. Never simulate successful
 authentication.
 
@@ -306,7 +306,7 @@ controls or claim that unsaved settings were saved.
 
 ## 9. Data-driven states
 
-Every Supabase-connected screen must handle:
+Every database-connected screen must handle:
 
 -   Loading: visible progress without layout jumps.
 -   Empty: explain the empty state and provide a relevant next action.
@@ -344,15 +344,15 @@ development fixture.
 -   Use reusable components and semantic design tokens.
 -   Keep UI, data access, and business logic reasonably separated.
 -   Follow current Next.js App Router conventions.
--   Use supported Supabase patterns for Next.js and server-side
+-   Use supported patterns for Next.js and server-side
     authentication.
--   Never expose secret keys or the Supabase `service_role` key in
+-   Never expose secret keys or the database credentials in
     browser code.
--   Enable and test Row Level Security (RLS) on private tables.
+-   Enforce store isolation in every query and test it (no RLS in MariaDB).
 -   Validate mutations on the server; client validation is
     supplementary.
 -   Store dates consistently and format them for Spanish-language users.
--   Connect implemented screens to real Supabase queries.
+-   Connect implemented screens to real database queries.
 -   Avoid unnecessary dependencies and state-management libraries.
 -   Keep the app in Spanish, with Mexican context and MXN currency where
     currency is eventually needed.
@@ -363,7 +363,7 @@ development fixture.
 
 For each screen: 1. Inspect the existing project and reuse working code.
 2. Identify the required data and schema. 3. Build the interface using
-this design system. 4. Connect it to Supabase after schema and
+this design system. 4. Connect it to the database after schema and
 permissions are ready. 5. Implement loading, empty, error, success, and
 validation states. 6. Check mobile and desktop layouts. 7. Check
 keyboard access and contrast. 8. Run available lint and TypeScript
@@ -387,4 +387,4 @@ unrelated features or change the design system silently.
 
 **Success criterion:** TADUKA looks like a polished, recognizable modern
 product; works on mobile and desktop; and uses real,
-permission-protected Supabase data for each implemented workflow.
+permission-protected database data for each implemented workflow.
