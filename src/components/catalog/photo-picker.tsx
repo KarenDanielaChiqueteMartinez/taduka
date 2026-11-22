@@ -64,49 +64,38 @@ export function PhotoPicker({ name = "photo" }: { name?: string }) {
   }
 
   return (
-    <div className="rounded-control border border-border bg-surface-muted/50 p-3">
-      <div className="flex items-center gap-3">
+    <div>
+      <label className="relative flex min-h-28 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-control border-2 border-dashed border-action/50 bg-action-soft/60 px-4 py-5 text-center text-base font-semibold text-action transition-colors hover:bg-action-soft has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary">
+        {preview && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={preview} alt="Vista previa de la foto" className="absolute inset-0 size-full object-cover" />
+        )}
         <span
-          aria-hidden="true"
-          className="relative flex size-[4.5rem] shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-primary"
+          className={`relative inline-flex items-center gap-2 ${preview ? "rounded-full bg-surface/90 px-4 py-2 shadow-card" : ""}`}
         >
-          {preview ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={preview} alt="" className="absolute inset-0 size-full rounded-2xl object-cover" />
-          ) : (
-            <Icon name="camera" className="size-7" />
-          )}
+          <Icon name="camera" className="size-5" />
+          {busy ? "Procesando…" : preview ? "Cambiar fotografía" : "Agregar o tomar fotografía"}
         </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">Foto del producto (opcional)</p>
-          <p className="text-xs text-text-secondary">Se reduce automáticamente antes de guardarse.</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <label className="inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full bg-action-soft px-3.5 text-sm font-semibold text-action transition-colors hover:bg-[#d3eddc] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary">
-              <Icon name="camera" className="size-4" />
-              {busy ? "Procesando…" : preview ? "Cambiar foto" : "Tomar o elegir foto"}
-              <input
-                ref={inputRef}
-                type="file"
-                name={name}
-                accept="image/*"
-                onChange={onChange}
-                disabled={busy}
-                className="sr-only"
-              />
-            </label>
-            {preview && (
-              <button
-                type="button"
-                onClick={remove}
-                className="inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-text-secondary transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-primary"
-              >
-                <Icon name="x" className="size-4" />
-                Quitar
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+        <input
+          ref={inputRef}
+          type="file"
+          name={name}
+          accept="image/*"
+          onChange={onChange}
+          disabled={busy}
+          className="sr-only"
+        />
+      </label>
+      {preview && (
+        <button
+          type="button"
+          onClick={remove}
+          className="mt-2 inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-text-secondary transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-primary"
+        >
+          <Icon name="x" className="size-4" />
+          Quitar foto
+        </button>
+      )}
       {error && (
         <p role="alert" className="mt-2 text-sm font-medium text-danger">
           {error}

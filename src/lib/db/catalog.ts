@@ -23,14 +23,20 @@ export type ProductRow = {
   name: string;
   unit: string;
   is_active: boolean;
+  category_id: string | null;
   category_name: string | null;
+  description: string | null;
+  barcode: string | null;
+  brand: string | null;
+  location: string | null;
   lot_count: number;
 };
 
 type RawProduct = Omit<ProductRow, "is_active"> & { is_active: number };
 
 const PRODUCT_SELECT = `
-  SELECT p.id, p.name, p.unit, p.is_active, c.name AS category_name,
+  SELECT p.id, p.name, p.unit, p.is_active, p.category_id, c.name AS category_name,
+         p.description, p.barcode, p.brand, p.location,
          (SELECT COUNT(*) FROM lots l WHERE l.product_id = p.id AND l.store_id = p.store_id) AS lot_count
     FROM products p
     LEFT JOIN categories c ON c.id = p.category_id AND c.store_id = p.store_id`;
@@ -54,15 +60,58 @@ export async function getProduct(storeId: string, productId: string): Promise<Pr
   return row ? toProduct(row) : null;
 }
 
+export type ProductInput = {
+  categoryId: string | null;
+  name: string;
+  unit: string;
+  description?: string | null;
+  barcode?: string | null;
+  brand?: string | null;
+  location?: string | null;
+};
+
 // La FK compuesta (category_id, store_id) impide usar una categoría de otra tienda.
-export async function createProduct(
-  storeId: string,
-  input: { categoryId: string | null; name: string; unit: string },
-): Promise<string> {
+export async function createProduct(storeId: string, input: ProductInput): Promise<string> {
   const id = newId();
   await db.exec(
-    "INSERT INTO products (id, store_id, category_id, name, unit) VALUES (?, ?, ?, ?, ?)",
-    [id, storeId, input.categoryId, input.name, input.unit],
+    `INSERT INTO products (id, store_id, category_id, name, unit, description, barcode, brand, location)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      storeId,
+      input.categoryId,
+      input.name,
+      input.unit,
+      input.description ?? null,
+      input.barcode ?? null,
+      input.brand ?? null,
+      input.location ?? null,
+    ],
   );
   return id;
+}
+
+// Devuelve false si el producto no existe en esa tienda.
+export async function updateProduct(
+  storeId: string,
+  productId: string,
+  input: ProductInput,
+): Promise<boolean> {
+  const result = await db.exec(
+    `UPDATE products
+        SET category_id = ?, name = ?, unit = ?, description = ?, barcode = ?, brand = ?, location = ?
+      WHERE id = ? AND store_id = ?`,
+    [
+      input.categoryId,
+      input.name,
+      input.unit,
+      input.description ?? null,
+      input.barcode ?? null,
+      input.brand ?? null,
+      input.location ?? null,
+      productId,
+      storeId,
+    ],
+  );
+  return result.affectedRows > 0;
 }

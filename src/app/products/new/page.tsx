@@ -5,9 +5,7 @@ import { listCategories } from "@/lib/db/catalog";
 import { getCurrentContext } from "@/lib/stores/context";
 import { AppShell } from "@/components/app/app-shell";
 import { LoadError, LoadingState, StoreRequired } from "@/components/app/page-states";
-import { ScreenHeader } from "@/components/app/screen-header";
 import { ProductForm } from "@/components/catalog/product-form";
-import { Card } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Nuevo producto · TADUKA" };
 
@@ -30,11 +28,8 @@ async function NewProduct() {
   const categories = await listCategories(membership.store.id).catch(() => []);
 
   return (
-    <>
-      <ScreenHeader title="Nuevo producto" storeName={membership.store.name} backHref="/products" />
-      <Card className="tadu-rise p-5">
-        <ProductForm categories={categories} />
-      </Card>
-    </>
+    <div className="tadu-rise">
+      <ProductForm categories={categories} />
+    </div>
   );
 }

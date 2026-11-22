@@ -70,10 +70,27 @@ async function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
   const countLot = withStock(lots)[0]; // el que vence primero
   const worst = summary?.worst ?? null;
   const next = summary?.nextLot ?? null;
+  const details: [string, string][] = [];
+  if (product.barcode) details.push(["Código de barras", product.barcode]);
+  if (product.brand) details.push(["Marca o fabricante", product.brand]);
+  if (product.location) details.push(["Ubicación", product.location]);
 
   return (
     <>
-      <ScreenHeader title="Detalle de producto" storeName={store.name} backHref="/products" />
+      <ScreenHeader
+        title="Detalle de producto"
+        storeName={store.name}
+        backHref="/products"
+        right={
+          <Link
+            href={`/products/${id}/edit`}
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-action-soft px-4 text-sm font-semibold text-action transition-colors hover:bg-[#d3eddc] focus-visible:outline-2 focus-visible:outline-primary"
+          >
+            <Icon name="pencil" className="size-4" />
+            Editar
+          </Link>
+        }
+      />
 
       {/* Ficha */}
       <Card className="tadu-rise mb-4 p-4">
@@ -97,6 +114,19 @@ async function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
             )}
           </div>
         </div>
+        {product.description && (
+          <p className="mt-4 text-sm leading-relaxed break-words text-text-secondary">{product.description}</p>
+        )}
+        {details.length > 0 && (
+          <dl className="mt-4 divide-y divide-border rounded-control border border-border">
+            {details.map(([label, value]) => (
+              <div key={label} className="flex items-baseline justify-between gap-4 px-3.5 py-2.5 text-sm">
+                <dt className="shrink-0 font-semibold">{label}</dt>
+                <dd className="min-w-0 text-right break-words text-text-secondary">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
         {worst && next ? (
           <div className={`mt-4 flex items-center gap-3 rounded-control px-3.5 py-3 ${STATUS_UI[worst].tone}`}>
             <Icon name={STATUS_UI[worst].icon} className="size-5" strokeWidth={2.4} />
