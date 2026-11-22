@@ -184,11 +184,6 @@ export async function createProduct(
   }
 
   revalidatePath("/products");
-  // "Crear y registrar lote": sigue directo al formulario de lote con el producto elegido.
-  // Si la foto falló se queda aquí para que el aviso no se pierda.
-  if (formData.get("intent") === "lot" && !warning) {
-    redirect(`/lots/new?product=${createdId}`);
-  }
   return {
     createdId,
     values: { name: "", categoryId: values.categoryId, unit: values.unit, description: "", barcode: "", brand: "", supplier: "", location: "" },

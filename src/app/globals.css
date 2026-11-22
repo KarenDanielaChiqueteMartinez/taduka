@@ -79,3 +79,41 @@ body {
 .tadu-scroll-x::-webkit-scrollbar {
   display: none;
 }
+
+/* Foto de producto: aparición de la vista previa y brillo mientras se procesa la imagen. */
+@keyframes tadu-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.tadu-pop {
+  animation: tadu-pop 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes tadu-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+.tadu-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.55), transparent);
+  animation: tadu-shimmer 1.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tadu-pop {
+    animation: none;
+  }
+  .tadu-shimmer::after {
+    animation: none;
+  }
+}

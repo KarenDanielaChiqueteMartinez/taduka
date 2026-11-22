@@ -165,8 +165,6 @@ export function ProductForm({ categories, product }: Props) {
         </h1>
         <div className="flex justify-end">
           <SubmitButton
-            name={isEdit ? undefined : "intent"}
-            value={isEdit ? undefined : "only"}
             pendingLabel={isEdit ? "Guardando…" : "Creando…"}
             variant="soft"
             className="min-h-11 shrink-0 rounded-full px-5 text-base"
@@ -359,13 +357,6 @@ export function ProductForm({ categories, product }: Props) {
           <Icon name="info" className="mt-0.5 size-4" />
           La unidad no se puede cambiar porque el producto ya tiene lotes registrados.
         </p>
-      )}
-
-      {/* Atajo al flujo principal: el producto sin lote todavía no controla caducidades. */}
-      {!isEdit && (
-        <SubmitButton name="intent" value="lot" pendingLabel="Guardando…" size="lg" className="w-full">
-          Crear y registrar lote
-        </SubmitButton>
       )}
     </form>
     <BarcodeSheet

@@ -1,25 +1,29 @@
-// Reduce una fotografía en el navegador antes de enviarla: lado máximo y calidad JPEG ajustados
-// para que pese poco (las fotos de celular suelen pesar varios MB). Solo se ejecuta en el cliente.
+// Prepara una fotografía en el navegador antes de enviarla: la recorta al centro en un cuadrado
+// y la reduce (lado y calidad JPEG ajustados) para que pese poco; las fotos de celular suelen
+// pesar varios MB y la base de datos limita cada foto a 512 KB. Solo se ejecuta en el cliente.
 export async function resizeImageToJpeg(
   file: File,
-  { maxSide = 640, maxBytes = 400 * 1024 }: { maxSide?: number; maxBytes?: number } = {},
+  { size = 600, maxBytes = 250 * 1024 }: { size?: number; maxBytes?: number } = {},
 ): Promise<File> {
   if (!file.type.startsWith("image/")) throw new Error("not_image");
 
   const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
-  const width = Math.max(1, Math.round(bitmap.width * scale));
-  const height = Math.max(1, Math.round(bitmap.height * scale));
+  // Recorte cuadrado centrado: el lado es el menor de la imagen original.
+  const side = Math.min(bitmap.width, bitmap.height);
+  const sourceX = Math.round((bitmap.width - side) / 2);
+  const sourceY = Math.round((bitmap.height - side) / 2);
+  const target = Math.max(1, Math.min(size, side));
 
   const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = target;
+  canvas.height = target;
   const context = canvas.getContext("2d");
   if (!context) throw new Error("no_canvas");
   // Fondo blanco: los PNG con transparencia no se vuelven negros al pasar a JPEG.
   context.fillStyle = "#ffffff";
-  context.fillRect(0, 0, width, height);
-  context.drawImage(bitmap, 0, 0, width, height);
+  context.fillRect(0, 0, target, target);
+  context.imageSmoothingQuality = "high";
+  context.drawImage(bitmap, sourceX, sourceY, side, side, 0, 0, target, target);
   bitmap.close();
 
   const toBlob = (quality: number) =>
