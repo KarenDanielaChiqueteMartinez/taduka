@@ -117,3 +117,23 @@ body {
     animation: none;
   }
 }
+
+/* Avisos (toast): entran desde abajo. */
+@keyframes tadu-toast {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.tadu-toast {
+  animation: tadu-toast 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tadu-toast {
+    animation: none;
+  }
+}

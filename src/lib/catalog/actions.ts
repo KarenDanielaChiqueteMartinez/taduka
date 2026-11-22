@@ -1,7 +1,6 @@
 ﻿"use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { savePhoto } from "@/lib/catalog/photos-server";
 import { isUnit } from "@/lib/catalog/units";
 import {
@@ -29,8 +28,6 @@ export type CatalogFormState = {
   success?: string;
   // Categoría recién creada, para que el formulario de producto la seleccione.
   category?: { id: string; name: string };
-  // Producto recién creado, para ofrecer registrar su primer lote.
-  createdId?: string;
   // Aviso no bloqueante (p. ej. el producto se creó pero la foto no se pudo guardar).
   warning?: string;
   fieldErrors?: Partial<
@@ -185,7 +182,6 @@ export async function createProduct(
 
   revalidatePath("/products");
   return {
-    createdId,
     values: { name: "", categoryId: values.categoryId, unit: values.unit, description: "", barcode: "", brand: "", supplier: "", location: "" },
     success: `Producto «${values.name}» creado.`,
     warning,
@@ -223,5 +219,6 @@ export async function updateProduct(
 
   revalidatePath("/products");
   revalidatePath(`/products/${productId}`);
-  redirect(`/products/${productId}`);
+  // La pantalla muestra el aviso y vuelve a la ficha (un redirect del servidor no puede avisar).
+  return { values, success: "Cambios guardados." };
 }

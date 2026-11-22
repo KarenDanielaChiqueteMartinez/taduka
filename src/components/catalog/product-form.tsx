@@ -1,8 +1,10 @@
 ﻿"use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   useActionState,
+  useEffect,
   useState,
   type InputHTMLAttributes,
   type ReactNode,
@@ -17,6 +19,7 @@ import { PhotoPicker } from "@/components/catalog/photo-picker";
 import { inputClass } from "@/components/ui/field";
 import { Icon } from "@/components/ui/icons";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { useToast } from "@/components/ui/toast";
 
 type Props = {
   categories: { id: string; name: string }[];
@@ -102,6 +105,20 @@ export function ProductForm({ categories, product }: Props) {
     product ? updateProduct.bind(null, product.id) : createProduct,
     {},
   );
+  const router = useRouter();
+  const toast = useToast();
+
+  // Guardado: avisa con una notificación y vuelve a la lista (al crear) o a la ficha (al editar);
+  // el aviso sigue visible allí. Si la foto no se pudo guardar, un aviso extra explica cómo
+  // agregarla después.
+  const productId = product?.id;
+  useEffect(() => {
+    if (!state.success) return;
+    toast.show(state.success);
+    if (state.warning) toast.show(state.warning, "warning");
+    router.push(productId ? `/products/${productId}` : "/products");
+  }, [state, toast, router, productId]);
+
   const errors = state.fieldErrors;
   const initial = state.values ?? {
     name: product?.name,
@@ -178,28 +195,6 @@ export function ProductForm({ categories, product }: Props) {
         <p role="alert" className="flex items-start gap-2 rounded-control bg-danger-soft px-3.5 py-3 text-sm font-medium text-danger">
           <Icon name="alert-triangle" className="mt-0.5 size-4" />
           {state.error}
-        </p>
-      )}
-      {state.success && (
-        <p role="status" className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-control bg-action-soft px-3.5 py-3 text-sm font-semibold text-action">
-          <span className="inline-flex items-center gap-2">
-            <Icon name="check-circle" className="size-4" />
-            {state.success}
-          </span>
-          {state.createdId && (
-            <Link href={`/lots/new?product=${state.createdId}`} className="underline underline-offset-4">
-              Registrar lote
-            </Link>
-          )}
-          <Link href="/products" className="underline underline-offset-4">
-            Ver productos
-          </Link>
-        </p>
-      )}
-      {state.warning && (
-        <p role="status" className="flex items-start gap-2 rounded-control bg-warning-soft px-3.5 py-3 text-sm font-medium text-warning">
-          <Icon name="alert-triangle" className="mt-0.5 size-4" />
-          {state.warning}
         </p>
       )}
 
