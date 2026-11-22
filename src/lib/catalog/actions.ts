@@ -29,6 +29,8 @@ export type CatalogFormState = {
   success?: string;
   // Categoría recién creada, para que el formulario de producto la seleccione.
   category?: { id: string; name: string };
+  // Producto recién creado, para ofrecer registrar su primer lote.
+  createdId?: string;
   // Aviso no bloqueante (p. ej. el producto se creó pero la foto no se pudo guardar).
   warning?: string;
   fieldErrors?: Partial<
@@ -182,7 +184,13 @@ export async function createProduct(
   }
 
   revalidatePath("/products");
+  // "Crear y registrar lote": sigue directo al formulario de lote con el producto elegido.
+  // Si la foto falló se queda aquí para que el aviso no se pierda.
+  if (formData.get("intent") === "lot" && !warning) {
+    redirect(`/lots/new?product=${createdId}`);
+  }
   return {
+    createdId,
     values: { name: "", categoryId: values.categoryId, unit: values.unit, description: "", barcode: "", brand: "", supplier: "", location: "" },
     success: `Producto «${values.name}» creado.`,
     warning,

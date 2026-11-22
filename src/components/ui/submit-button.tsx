@@ -10,6 +10,9 @@ type Props = {
   variant?: ButtonVariant;
   size?: ButtonSize;
   className?: string;
+  // Para formularios con varios botones de envío (el servidor lee name=value).
+  name?: string;
+  value?: string;
 };
 
 export function SubmitButton({
@@ -18,12 +21,16 @@ export function SubmitButton({
   variant = "primary",
   size = "md",
   className = "",
+  name,
+  value,
 }: Props) {
   const { pending } = useFormStatus();
 
   return (
     <button
       type="submit"
+      name={name}
+      value={value}
       disabled={pending}
       aria-disabled={pending}
       className={buttonClass(variant, size, className)}

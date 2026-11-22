@@ -122,6 +122,16 @@ export function ProductForm({ categories, product }: Props) {
   // La categoría es obligatoria: sin ninguna creada, se abre la ventana para crear la primera.
   const [dialogOpen, setDialogOpen] = useState(categories.length === 0);
 
+  // "Más detalles" arranca abierto si ya hay datos opcionales (editar) o si el servidor
+  // rechazó alguno de esos campos.
+  const hasDetails = Boolean(
+    initial.description || initial.barcode || initial.location || initial.brand || initial.supplier,
+  );
+  const [moreOpen, setMoreOpen] = useState(hasDetails);
+  const detailsHaveError = Boolean(
+    errors?.description || errors?.barcode || errors?.location || errors?.brand || errors?.supplier,
+  );
+
   // El código se captura en una hoja aparte; el formulario lo envía en un campo oculto.
   const [barcode, setBarcode] = useState(initial.barcode ?? "");
   const [barcodeOpen, setBarcodeOpen] = useState(false);
@@ -135,16 +145,27 @@ export function ProductForm({ categories, product }: Props) {
   return (
     <>
     <form action={action} noValidate className="space-y-5">
-      <header className="tadu-rise flex items-center justify-between gap-3">
+      {/* Cabecera fija: en pantallas angostas "Cancelar" es una X para que el título quepa. */}
+      <header className="sticky top-0 z-30 -mx-4 -mt-4 flex items-center justify-between gap-3 bg-background px-4 py-3 sm:-mx-6 sm:px-6 md:-mt-8">
         <Link
           href={product ? `/products/${product.id}` : "/products"}
-          className="inline-flex min-h-11 items-center gap-1 rounded-full border border-border bg-surface pr-4 pl-2.5 text-base font-semibold text-text-secondary shadow-card transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-primary"
+          aria-label="Cancelar"
+          className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-text-secondary shadow-card transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-primary sm:w-auto sm:gap-1 sm:pr-4 sm:pl-2.5 sm:text-base sm:font-semibold"
         >
-          <Icon name="chevron-left" className="size-5" strokeWidth={2.4} />
-          Cancelar
+          <Icon name="x" className="size-5 sm:hidden" strokeWidth={2.4} />
+          <Icon name="chevron-left" className="hidden size-5 sm:block" strokeWidth={2.4} />
+          <span className="hidden sm:inline">Cancelar</span>
         </Link>
-        <h1 className="truncate text-lg font-bold tracking-tight">{isEdit ? "Editar producto" : "Nuevo producto"}</h1>
-        <SubmitButton pendingLabel={isEdit ? "Guardando…" : "Creando…"} variant="soft" className="min-h-11 rounded-full px-5 text-base">
+        <h1 className="min-w-0 flex-1 truncate text-lg font-bold tracking-tight sm:flex-none sm:text-xl">
+          {isEdit ? "Editar producto" : "Nuevo producto"}
+        </h1>
+        <SubmitButton
+          name={isEdit ? undefined : "intent"}
+          value={isEdit ? undefined : "only"}
+          pendingLabel={isEdit ? "Guardando…" : "Creando…"}
+          variant="soft"
+          className="min-h-11 shrink-0 rounded-full px-5 text-base"
+        >
           {isEdit ? "Guardar" : "Crear"}
         </SubmitButton>
       </header>
@@ -156,11 +177,16 @@ export function ProductForm({ categories, product }: Props) {
         </p>
       )}
       {state.success && (
-        <p role="status" className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-control bg-action-soft px-3.5 py-3 text-sm font-semibold text-action">
+        <p role="status" className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-control bg-action-soft px-3.5 py-3 text-sm font-semibold text-action">
           <span className="inline-flex items-center gap-2">
             <Icon name="check-circle" className="size-4" />
             {state.success}
           </span>
+          {state.createdId && (
+            <Link href={`/lots/new?product=${state.createdId}`} className="underline underline-offset-4">
+              Registrar lote
+            </Link>
+          )}
           <Link href="/products" className="underline underline-offset-4">
             Ver productos
           </Link>
@@ -198,28 +224,6 @@ export function ProductForm({ categories, product }: Props) {
       </div>
 
       {!isEdit && <PhotoPicker />}
-
-      <div className="space-y-1.5">
-        <label htmlFor="description" className="text-base font-bold text-text-primary">
-          Descripción
-        </label>
-        <textarea
-          id="description"
-          name="description"
-          rows={3}
-          maxLength={500}
-          placeholder="Añade una descripción"
-          defaultValue={initial.description}
-          aria-invalid={errors?.description ? true : undefined}
-          aria-describedby={errors?.description ? "description-error" : undefined}
-          className={`${inputClass} h-auto min-h-24 resize-none py-3`}
-        />
-        {errors?.description && (
-          <p id="description-error" className="text-sm font-medium text-danger">
-            {errors.description}
-          </p>
-        )}
-      </div>
 
       <div className="divide-y divide-border rounded-control border border-border bg-surface">
         <Row id="categoryId" label="Categoría" error={errors?.categoryId}>
@@ -261,46 +265,88 @@ export function ProductForm({ categories, product }: Props) {
             ))}
           </RowSelect>
         </Row>
-        <Row id="barcode" label="Código QR / Código de barras" error={errors?.barcode}>
-          <input type="hidden" name="barcode" value={barcode} />
-          <button
-            type="button"
-            id="barcode"
-            onClick={() => setBarcodeOpen(true)}
-            aria-describedby={errors?.barcode ? "barcode-error" : undefined}
-            className={`${rowControl} cursor-pointer truncate ${errors?.barcode ? "text-danger" : ""}`}
-          >
-            {barcode || "Asignar"}
-          </button>
-        </Row>
-        <Row id="location" label="Ubicación" error={errors?.location}>
-          <RowInput
-            id="location"
-            error={errors?.location}
-            maxLength={80}
-            placeholder="Asignar ubicación"
-            defaultValue={initial.location}
-          />
-        </Row>
-        <Row id="brand" label="Marca o fabricante" error={errors?.brand}>
-          <RowInput
-            id="brand"
-            error={errors?.brand}
-            maxLength={80}
-            placeholder="Añadir"
-            defaultValue={initial.brand}
-          />
-        </Row>
-        <Row id="supplier" label="Proveedor" error={errors?.supplier}>
-          <RowInput
-            id="supplier"
-            error={errors?.supplier}
-            maxLength={80}
-            placeholder="Añadir"
-            defaultValue={initial.supplier}
-          />
-        </Row>
       </div>
+
+      {/* Lo que no es indispensable queda plegado; se abre solo si ya tiene datos o errores. */}
+      <details
+        open={moreOpen || detailsHaveError}
+        onToggle={(event) => setMoreOpen(event.currentTarget.open)}
+        className="group space-y-4"
+      >
+        <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 rounded-control border border-border bg-surface px-4 text-base font-bold focus-visible:outline-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
+          <span>
+            Más detalles <span className="text-sm font-medium text-text-secondary">(opcional)</span>
+          </span>
+          <Icon
+            name="chevron-right"
+            className="size-5 text-text-secondary transition-transform group-open:rotate-90"
+          />
+        </summary>
+
+        <div className="space-y-1.5">
+          <label htmlFor="description" className="text-base font-bold text-text-primary">
+            Descripción
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            rows={3}
+            maxLength={500}
+            placeholder="Añade una descripción"
+            defaultValue={initial.description}
+            aria-invalid={errors?.description ? true : undefined}
+            aria-describedby={errors?.description ? "description-error" : undefined}
+            className={`${inputClass} h-auto min-h-24 resize-none py-3`}
+          />
+          {errors?.description && (
+            <p id="description-error" className="text-sm font-medium text-danger">
+              {errors.description}
+            </p>
+          )}
+        </div>
+
+        <div className="divide-y divide-border rounded-control border border-border bg-surface">
+          <Row id="barcode" label="Código QR / Código de barras" error={errors?.barcode}>
+            <input type="hidden" name="barcode" value={barcode} />
+            <button
+              type="button"
+              id="barcode"
+              onClick={() => setBarcodeOpen(true)}
+              aria-describedby={errors?.barcode ? "barcode-error" : undefined}
+              className={`${rowControl} cursor-pointer truncate ${errors?.barcode ? "text-danger" : ""}`}
+            >
+              {barcode || "Asignar"}
+            </button>
+          </Row>
+          <Row id="location" label="Ubicación" error={errors?.location}>
+            <RowInput
+              id="location"
+              error={errors?.location}
+              maxLength={80}
+              placeholder="Asignar ubicación"
+              defaultValue={initial.location}
+            />
+          </Row>
+          <Row id="brand" label="Marca o fabricante" error={errors?.brand}>
+            <RowInput
+              id="brand"
+              error={errors?.brand}
+              maxLength={80}
+              placeholder="Añadir"
+              defaultValue={initial.brand}
+            />
+          </Row>
+          <Row id="supplier" label="Proveedor" error={errors?.supplier}>
+            <RowInput
+              id="supplier"
+              error={errors?.supplier}
+              maxLength={80}
+              placeholder="Añadir"
+              defaultValue={initial.supplier}
+            />
+          </Row>
+        </div>
+      </details>
 
       {unitLocked && (
         <p className="flex items-start gap-2 rounded-control bg-surface-muted px-3.5 py-3 text-sm text-text-secondary">
@@ -312,6 +358,13 @@ export function ProductForm({ categories, product }: Props) {
         <Icon name="info" className="mt-0.5 size-4" />
         La fecha de caducidad no va en el producto: se registra en cada lote.
       </p>
+
+      {/* Atajo al flujo principal: el producto sin lote todavía no controla caducidades. */}
+      {!isEdit && (
+        <SubmitButton name="intent" value="lot" pendingLabel="Guardando…" size="lg" className="w-full">
+          Crear y registrar lote
+        </SubmitButton>
+      )}
     </form>
     <BarcodeSheet
       open={barcodeOpen}
