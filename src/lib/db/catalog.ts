@@ -28,6 +28,7 @@ export type ProductRow = {
   description: string | null;
   barcode: string | null;
   brand: string | null;
+  supplier: string | null;
   location: string | null;
   lot_count: number;
 };
@@ -36,7 +37,7 @@ type RawProduct = Omit<ProductRow, "is_active"> & { is_active: number };
 
 const PRODUCT_SELECT = `
   SELECT p.id, p.name, p.unit, p.is_active, p.category_id, c.name AS category_name,
-         p.description, p.barcode, p.brand, p.location,
+         p.description, p.barcode, p.brand, p.supplier, p.location,
          (SELECT COUNT(*) FROM lots l WHERE l.product_id = p.id AND l.store_id = p.store_id) AS lot_count
     FROM products p
     LEFT JOIN categories c ON c.id = p.category_id AND c.store_id = p.store_id`;
@@ -67,6 +68,7 @@ export type ProductInput = {
   description?: string | null;
   barcode?: string | null;
   brand?: string | null;
+  supplier?: string | null;
   location?: string | null;
 };
 
@@ -74,8 +76,8 @@ export type ProductInput = {
 export async function createProduct(storeId: string, input: ProductInput): Promise<string> {
   const id = newId();
   await db.exec(
-    `INSERT INTO products (id, store_id, category_id, name, unit, description, barcode, brand, location)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO products (id, store_id, category_id, name, unit, description, barcode, brand, supplier, location)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       storeId,
@@ -85,6 +87,7 @@ export async function createProduct(storeId: string, input: ProductInput): Promi
       input.description ?? null,
       input.barcode ?? null,
       input.brand ?? null,
+      input.supplier ?? null,
       input.location ?? null,
     ],
   );
@@ -99,7 +102,7 @@ export async function updateProduct(
 ): Promise<boolean> {
   const result = await db.exec(
     `UPDATE products
-        SET category_id = ?, name = ?, unit = ?, description = ?, barcode = ?, brand = ?, location = ?
+        SET category_id = ?, name = ?, unit = ?, description = ?, barcode = ?, brand = ?, supplier = ?, location = ?
       WHERE id = ? AND store_id = ?`,
     [
       input.categoryId,
@@ -108,6 +111,7 @@ export async function updateProduct(
       input.description ?? null,
       input.barcode ?? null,
       input.brand ?? null,
+      input.supplier ?? null,
       input.location ?? null,
       productId,
       storeId,

@@ -22,14 +22,17 @@ export type CatalogFormState = {
     description?: string;
     barcode?: string;
     brand?: string;
+    supplier?: string;
     location?: string;
   };
   error?: string;
   success?: string;
+  // Categoría recién creada, para que el formulario de producto la seleccione.
+  category?: { id: string; name: string };
   // Aviso no bloqueante (p. ej. el producto se creó pero la foto no se pudo guardar).
   warning?: string;
   fieldErrors?: Partial<
-    Record<"name" | "categoryId" | "unit" | "description" | "barcode" | "brand" | "location", string>
+    Record<"name" | "categoryId" | "unit" | "description" | "barcode" | "brand" | "supplier" | "location", string>
   >;
 };
 
@@ -38,6 +41,7 @@ const MAX_PRODUCT_NAME = 120;
 const MAX_DESCRIPTION = 500;
 const MAX_BARCODE = 64;
 const MAX_BRAND = 80;
+const MAX_SUPPLIER = 80;
 const MAX_LOCATION = 80;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -63,8 +67,9 @@ export async function createCategory(
   const { membership } = await getCurrentContext();
   if (!membership) return { values, error: NO_STORE };
 
+  let id: string;
   try {
-    await createCategory_(membership.store.id, name);
+    id = await createCategory_(membership.store.id, name);
   } catch (error) {
     if (isDuplicate(error)) {
       return { values, fieldErrors: { name: "Ya tienes una categoría con ese nombre." } };
@@ -77,7 +82,7 @@ export async function createCategory(
 
   revalidatePath("/categories");
   revalidatePath("/products");
-  return { values: { name: "" }, success: `Categoría «${name}» creada.` };
+  return { values: { name: "" }, success: `Categoría «${name}» creada.`, category: { id, name } };
 }
 
 
@@ -95,8 +100,9 @@ function parseProductForm(formData: FormData): ParsedProduct {
   const description = text("description");
   const barcode = text("barcode");
   const brand = text("brand");
+  const supplier = text("supplier");
   const location = text("location");
-  const values = { name, categoryId, unit, description, barcode, brand, location };
+  const values = { name, categoryId, unit, description, barcode, brand, supplier, location };
 
   const fieldErrors: ParsedProduct["fieldErrors"] = {};
   if (!name) fieldErrors.name = "Escribe el nombre del producto.";
@@ -108,9 +114,11 @@ function parseProductForm(formData: FormData): ParsedProduct {
   }
   if (barcode.length > MAX_BARCODE) fieldErrors.barcode = `Usa máximo ${MAX_BARCODE} caracteres.`;
   if (brand.length > MAX_BRAND) fieldErrors.brand = `Usa máximo ${MAX_BRAND} caracteres.`;
+  if (supplier.length > MAX_SUPPLIER) fieldErrors.supplier = `Usa máximo ${MAX_SUPPLIER} caracteres.`;
   if (location.length > MAX_LOCATION) fieldErrors.location = `Usa máximo ${MAX_LOCATION} caracteres.`;
   if (!isUnit(unit)) fieldErrors.unit = "Elige una unidad de medida.";
-  if (categoryId && !UUID_PATTERN.test(categoryId)) {
+  if (!categoryId) fieldErrors.categoryId = "Elige una categoría.";
+  else if (!UUID_PATTERN.test(categoryId)) {
     fieldErrors.categoryId = "La categoría seleccionada no es válida.";
   }
 
@@ -124,6 +132,7 @@ function parseProductForm(formData: FormData): ParsedProduct {
       description: description || null,
       barcode: barcode || null,
       brand: brand || null,
+      supplier: supplier || null,
       location: location || null,
     },
   };
@@ -174,7 +183,7 @@ export async function createProduct(
 
   revalidatePath("/products");
   return {
-    values: { name: "", categoryId: values.categoryId, unit: values.unit, description: "", barcode: "", brand: "", location: "" },
+    values: { name: "", categoryId: values.categoryId, unit: values.unit, description: "", barcode: "", brand: "", supplier: "", location: "" },
     success: `Producto «${values.name}» creado.`,
     warning,
   };

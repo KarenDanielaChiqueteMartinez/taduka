@@ -1,16 +1,30 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { createCategory, type CatalogFormState } from "@/lib/catalog/actions";
 import { Field } from "@/components/ui/field";
 import { Icon } from "@/components/ui/icons";
 import { SubmitButton } from "@/components/ui/submit-button";
 
-export function CategoryForm() {
+type Props = {
+  // Se llama con la categoría recién creada (p. ej. para seleccionarla en otro formulario).
+  onCreated?: (category: { id: string; name: string }) => void;
+  // Evita ids repetidos cuando el formulario está dentro de otro formulario de la página.
+  inputId?: string;
+  autoFocus?: boolean;
+};
+
+export function CategoryForm({ onCreated, inputId = "name", autoFocus }: Props) {
   const [state, action] = useActionState<CatalogFormState, FormData>(
     createCategory,
     {},
   );
+
+  useEffect(() => {
+    if (state.category) onCreated?.(state.category);
+    // Solo reacciona a un nuevo resultado de la acción.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   return (
     <form action={action} noValidate className="space-y-4">
@@ -27,7 +41,9 @@ export function CategoryForm() {
         </p>
       )}
       <Field
-        id="name"
+        id={inputId}
+        name="name"
+        autoFocus={autoFocus}
         label="Nombre de la categoría"
         type="text"
         placeholder="Ej. Lácteos"

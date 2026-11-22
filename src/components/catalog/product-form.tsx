@@ -1,10 +1,18 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useActionState, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from "react";
+import {
+  useActionState,
+  useState,
+  type InputHTMLAttributes,
+  type ReactNode,
+  type SelectHTMLAttributes,
+} from "react";
 import { createProduct, updateProduct, type CatalogFormState } from "@/lib/catalog/actions";
 import { UNITS } from "@/lib/catalog/units";
 import type { ProductRow } from "@/lib/db/catalog";
+import { BarcodeSheet } from "@/components/catalog/barcode-sheet";
+import { CategoryDialog } from "@/components/catalog/category-dialog";
 import { PhotoPicker } from "@/components/catalog/photo-picker";
 import { inputClass } from "@/components/ui/field";
 import { Icon } from "@/components/ui/icons";
@@ -102,11 +110,30 @@ export function ProductForm({ categories, product }: Props) {
     description: product?.description ?? "",
     barcode: product?.barcode ?? "",
     brand: product?.brand ?? "",
+    supplier: product?.supplier ?? "",
     location: product?.location ?? "",
   };
   const unitLocked = (product?.lot_count ?? 0) > 0;
 
+  // La lista y la selección son locales: una categoría creada en la ventana aparece y queda
+  // elegida sin recargar la página ni perder lo ya escrito.
+  const [cats, setCats] = useState(categories);
+  const [categoryId, setCategoryId] = useState(initial.categoryId ?? "");
+  // La categoría es obligatoria: sin ninguna creada, se abre la ventana para crear la primera.
+  const [dialogOpen, setDialogOpen] = useState(categories.length === 0);
+
+  // El código se captura en una hoja aparte; el formulario lo envía en un campo oculto.
+  const [barcode, setBarcode] = useState(initial.barcode ?? "");
+  const [barcodeOpen, setBarcodeOpen] = useState(false);
+  // Cuando la acción responde, el servidor manda el valor vigente (vacío tras crear con éxito).
+  const [seenState, setSeenState] = useState(state);
+  if (seenState !== state) {
+    setSeenState(state);
+    setBarcode(initial.barcode ?? "");
+  }
+
   return (
+    <>
     <form action={action} noValidate className="space-y-5">
       <header className="tadu-rise flex items-center justify-between gap-3">
         <Link
@@ -196,14 +223,34 @@ export function ProductForm({ categories, product }: Props) {
 
       <div className="divide-y divide-border rounded-control border border-border bg-surface">
         <Row id="categoryId" label="Categoría" error={errors?.categoryId}>
-          <RowSelect id="categoryId" error={errors?.categoryId} defaultValue={initial.categoryId ?? ""}>
-            <option value="">Sin categoría</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
+          {cats.length === 0 ? (
+            <button
+              type="button"
+              id="categoryId"
+              onClick={() => setDialogOpen(true)}
+              aria-describedby={errors?.categoryId ? "categoryId-error" : undefined}
+              className={`${rowControl} cursor-pointer`}
+            >
+              Crear categoría
+            </button>
+          ) : (
+            <RowSelect
+              id="categoryId"
+              error={errors?.categoryId}
+              required
+              value={categoryId}
+              onChange={(event) => setCategoryId(event.target.value)}
+            >
+              <option value="" disabled>
+                Elige una categoría
               </option>
-            ))}
-          </RowSelect>
+              {cats.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </RowSelect>
+          )}
         </Row>
         <Row id="unit" label="Unidad de medida" error={errors?.unit}>
           <RowSelect id="unit" error={errors?.unit} required disabled={unitLocked} defaultValue={initial.unit || "pieza"}>
@@ -214,16 +261,17 @@ export function ProductForm({ categories, product }: Props) {
             ))}
           </RowSelect>
         </Row>
-        <Row id="barcode" label="Código de barras" error={errors?.barcode}>
-          <RowInput
+        <Row id="barcode" label="Código QR / Código de barras" error={errors?.barcode}>
+          <input type="hidden" name="barcode" value={barcode} />
+          <button
+            type="button"
             id="barcode"
-            error={errors?.barcode}
-            inputMode="numeric"
-            maxLength={64}
-            autoComplete="off"
-            placeholder="Asignar"
-            defaultValue={initial.barcode}
-          />
+            onClick={() => setBarcodeOpen(true)}
+            aria-describedby={errors?.barcode ? "barcode-error" : undefined}
+            className={`${rowControl} cursor-pointer truncate ${errors?.barcode ? "text-danger" : ""}`}
+          >
+            {barcode || "Asignar"}
+          </button>
         </Row>
         <Row id="location" label="Ubicación" error={errors?.location}>
           <RowInput
@@ -243,6 +291,15 @@ export function ProductForm({ categories, product }: Props) {
             defaultValue={initial.brand}
           />
         </Row>
+        <Row id="supplier" label="Proveedor" error={errors?.supplier}>
+          <RowInput
+            id="supplier"
+            error={errors?.supplier}
+            maxLength={80}
+            placeholder="Añadir"
+            defaultValue={initial.supplier}
+          />
+        </Row>
       </div>
 
       {unitLocked && (
@@ -256,5 +313,24 @@ export function ProductForm({ categories, product }: Props) {
         La fecha de caducidad no va en el producto: se registra en cada lote.
       </p>
     </form>
+    <BarcodeSheet
+      open={barcodeOpen}
+      value={barcode}
+      onClose={() => setBarcodeOpen(false)}
+      onConfirm={(code) => {
+        setBarcode(code);
+        setBarcodeOpen(false);
+      }}
+    />
+    <CategoryDialog
+      open={dialogOpen}
+      onClose={() => setDialogOpen(false)}
+      onCreated={(category) => {
+        setCats((list) => [...list, category].sort((a, b) => a.name.localeCompare(b.name)));
+        setCategoryId(category.id);
+        setDialogOpen(false);
+      }}
+    />
+    </>
   );
 }

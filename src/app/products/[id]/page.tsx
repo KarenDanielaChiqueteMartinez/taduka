@@ -73,6 +73,7 @@ async function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
   const details: [string, string][] = [];
   if (product.barcode) details.push(["Código de barras", product.barcode]);
   if (product.brand) details.push(["Marca o fabricante", product.brand]);
+  if (product.supplier) details.push(["Proveedor", product.supplier]);
   if (product.location) details.push(["Ubicación", product.location]);
 
   return (
