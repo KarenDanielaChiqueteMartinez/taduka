@@ -48,8 +48,7 @@ async function Products({
   const raw = await searchParams;
   const filters = { q: first(raw.q).trim().slice(0, 80) };
 
-  const { user, membership, storeError } = await getCurrentContext();
-  const initial = (user.email ?? "?").slice(0, 1).toUpperCase();
+  const { membership, storeError } = await getCurrentContext();
   if (storeError) return <LoadError message="No pudimos cargar tu tienda." />;
   if (!membership) return <StoreRequired />;
 
@@ -70,11 +69,6 @@ async function Products({
   const summaries = summarizeByProduct(lotsResult.lots);
 
   const enriched = products.map((p) => ({ p, s: summaries.get(p.id) as ProductSummary | undefined }));
-
-  const counts = {
-    por_vencer: enriched.filter((x) => (x.s?.counts.por_vencer ?? 0) > 0).length,
-    vencido: enriched.filter((x) => (x.s?.counts.vencido ?? 0) > 0).length,
-  };
 
   const q = filters.q.toLowerCase();
   const visible = enriched
@@ -100,8 +94,6 @@ async function Products({
       <ScreenHeader
         title="Inventario"
         storeName={store.name}
-        initial={initial}
-        alertDot={counts.vencido + counts.por_vencer > 0}
         right={
           <Link
             href="/products/new"
@@ -116,7 +108,7 @@ async function Products({
       {/* Búsqueda */}
       <form action="/products" method="get" role="search" className="tadu-rise mb-3">
         <label htmlFor="q" className="sr-only">
-          Buscar por producto, categoría o lote
+          Buscar producto
         </label>
         <div className="flex items-center gap-2 rounded-full border border-border/70 bg-surface pr-1.5 pl-4 shadow-card focus-within:border-action focus-within:outline-2 focus-within:outline-action/30">
           <Icon name="search" className="size-5 text-text-secondary" />
@@ -125,7 +117,7 @@ async function Products({
             name="q"
             type="search"
             defaultValue={filters.q}
-            placeholder="Buscar producto o lote…"
+            placeholder="Buscar producto"
             className="h-12 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-text-secondary/80"
           />
           <button
