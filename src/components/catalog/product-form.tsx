@@ -146,28 +146,34 @@ export function ProductForm({ categories, product }: Props) {
     <>
     <form action={action} noValidate className="space-y-5">
       {/* Cabecera fija: en pantallas angostas "Cancelar" es una X para que el título quepa. */}
-      <header className="sticky top-0 z-30 -mx-4 -mt-4 flex items-center justify-between gap-3 bg-background px-4 py-3 sm:-mx-6 sm:px-6 md:-mt-8">
-        <Link
-          href={product ? `/products/${product.id}` : "/products"}
-          aria-label="Cancelar"
-          className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-text-secondary shadow-card transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-primary sm:w-auto sm:gap-1 sm:pr-4 sm:pl-2.5 sm:text-base sm:font-semibold"
-        >
-          <Icon name="x" className="size-5 sm:hidden" strokeWidth={2.4} />
-          <Icon name="chevron-left" className="hidden size-5 sm:block" strokeWidth={2.4} />
-          <span className="hidden sm:inline">Cancelar</span>
-        </Link>
-        <h1 className="min-w-0 flex-1 truncate text-lg font-bold tracking-tight sm:flex-none sm:text-xl">
+      {/* Cabecera fija: en pantallas angostas "Cancelar" es una X para que el título quepa.
+          Tres columnas con los lados de igual ancho mantienen el título centrado. */}
+      <header className="sticky top-0 z-30 -mx-4 -mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3 bg-background px-4 py-3 sm:-mx-6 sm:px-6 md:-mt-8">
+        <div className="flex justify-start">
+          <Link
+            href={product ? `/products/${product.id}` : "/products"}
+            aria-label="Cancelar"
+            className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-text-secondary shadow-card transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-primary sm:w-auto sm:gap-1 sm:pr-4 sm:pl-2.5 sm:text-base sm:font-semibold"
+          >
+            <Icon name="x" className="size-5 sm:hidden" strokeWidth={2.4} />
+            <Icon name="chevron-left" className="hidden size-5 sm:block" strokeWidth={2.4} />
+            <span className="hidden sm:inline">Cancelar</span>
+          </Link>
+        </div>
+        <h1 className="min-w-0 truncate text-center text-lg font-bold tracking-tight sm:text-xl">
           {isEdit ? "Editar producto" : "Nuevo producto"}
         </h1>
-        <SubmitButton
-          name={isEdit ? undefined : "intent"}
-          value={isEdit ? undefined : "only"}
-          pendingLabel={isEdit ? "Guardando…" : "Creando…"}
-          variant="soft"
-          className="min-h-11 shrink-0 rounded-full px-5 text-base"
-        >
-          {isEdit ? "Guardar" : "Crear"}
-        </SubmitButton>
+        <div className="flex justify-end">
+          <SubmitButton
+            name={isEdit ? undefined : "intent"}
+            value={isEdit ? undefined : "only"}
+            pendingLabel={isEdit ? "Guardando…" : "Creando…"}
+            variant="soft"
+            className="min-h-11 shrink-0 rounded-full px-5 text-base"
+          >
+            {isEdit ? "Guardar" : "Crear"}
+          </SubmitButton>
+        </div>
       </header>
 
       {state.error && (
@@ -306,7 +312,7 @@ export function ProductForm({ categories, product }: Props) {
         </div>
 
         <div className="divide-y divide-border rounded-control border border-border bg-surface">
-          <Row id="barcode" label="Código QR / Código de barras" error={errors?.barcode}>
+          <Row id="barcode" label="Código de barras" error={errors?.barcode}>
             <input type="hidden" name="barcode" value={barcode} />
             <button
               type="button"
@@ -354,10 +360,6 @@ export function ProductForm({ categories, product }: Props) {
           La unidad no se puede cambiar porque el producto ya tiene lotes registrados.
         </p>
       )}
-      <p className="flex items-start gap-2 rounded-control bg-primary-soft/60 px-3.5 py-3 text-sm text-primary">
-        <Icon name="info" className="mt-0.5 size-4" />
-        La fecha de caducidad no va en el producto: se registra en cada lote.
-      </p>
 
       {/* Atajo al flujo principal: el producto sin lote todavía no controla caducidades. */}
       {!isEdit && (

@@ -19,7 +19,7 @@ function generateCode(): string {
   return [...body, (10 - (sum % 10)) % 10].join("");
 }
 
-// Pantalla (hoja inferior) para escribir, generar o escanear el código de barras o QR. Debe
+// Pantalla (hoja inferior) para escribir, generar o escanear el código de barras. Debe
 // renderizarse fuera de cualquier <form>.
 export function BarcodeSheet({ open, value, onClose, onConfirm }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -69,7 +69,7 @@ function SheetBody({
           Cancelar
         </button>
         <h2 id="barcode-sheet-title" className="text-center text-base leading-tight font-bold">
-          Código QR / Código de barras
+          Código de barras
         </h2>
         <button
           type="button"

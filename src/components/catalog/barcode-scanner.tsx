@@ -30,7 +30,6 @@ async function createReader() {
         BarcodeFormat.CODE_128,
         BarcodeFormat.CODE_39,
         BarcodeFormat.ITF,
-        BarcodeFormat.QR_CODE,
       ],
     ],
     [DecodeHintType.TRY_HARDER, true],
@@ -38,7 +37,7 @@ async function createReader() {
   return new BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 120 });
 }
 
-// Lee códigos de barras y QR con la cámara trasera, en vivo o a partir de una foto.
+// Lee códigos de barras con la cámara trasera, en vivo o a partir de una foto.
 // Requiere HTTPS.
 export function BarcodeScanner({ onDetect, onCancel }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
