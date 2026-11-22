@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { signIn, signUp, type AuthState } from "@/lib/auth/actions";
 import { Field } from "@/components/ui/field";
 import { Icon } from "@/components/ui/icons";
+import { PasswordField } from "@/components/ui/password-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 type Props = { mode: "login" | "register" };
@@ -46,20 +47,18 @@ export function AuthForm({ mode }: Props) {
         defaultValue={state.email}
         error={state.fieldErrors?.email}
       />
-      <Field
+      <PasswordField
         id="password"
         label="Contraseña"
-        type="password"
         autoComplete={isRegister ? "new-password" : "current-password"}
         required
         minLength={isRegister ? 8 : undefined}
         error={state.fieldErrors?.password}
       />
       {isRegister && (
-        <Field
+        <PasswordField
           id="confirmPassword"
           label="Confirmar contraseña"
-          type="password"
           autoComplete="new-password"
           required
           error={state.fieldErrors?.confirmPassword}

@@ -56,15 +56,20 @@ export async function signIn(
     const valid = user
       ? await verifyPassword(password.slice(0, MAX_PASSWORD_LENGTH), user.password_hash)
       : await verifyAgainstDummy(password.slice(0, MAX_PASSWORD_LENGTH));
-    if (!user || !valid) {
+    if (!user) {
       await recordFailure(email, ip);
-      return { email, error: "Correo o contraseña incorrectos." };
+      return { email, fieldErrors: { email: "No existe una cuenta asociada a este correo." } };
+    }
+    if (!valid) {
+      await recordFailure(email, ip);
+      return { email, fieldErrors: { password: "La contraseña es incorrecta." } };
     }
     await clearFailures(email);
     await markLogin(user.id);
     await startSession(user.id);
     userId = user.id;
-  } catch {
+  } catch (error) {
+    console.error("signIn falló:", error);
     return { email, error: SERVER_ERROR };
   }
   void userId;
@@ -98,6 +103,7 @@ export async function signUp(
     if (isDuplicate(error)) {
       return { email, error: "Ya existe una cuenta con ese correo. Inicia sesión." };
     }
+    console.error("signUp falló:", error);
     return { email, error: SERVER_ERROR };
   }
   redirect("/dashboard");
