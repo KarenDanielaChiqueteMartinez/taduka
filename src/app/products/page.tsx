@@ -5,7 +5,7 @@ import { connection } from "next/server";
 import { unitLabel } from "@/lib/catalog/units";
 import { formatDate, formatQty } from "@/lib/format";
 import { photoUrl } from "@/lib/catalog/photos";
-import { listCategories, listProducts, type CategoryRow, type ProductRow } from "@/lib/db/catalog";
+import { listProducts, type ProductRow } from "@/lib/db/catalog";
 import { listLots, type LotView } from "@/lib/db/lots";
 import { getPhotoVersions } from "@/lib/db/photos";
 import {
@@ -25,8 +25,6 @@ import { StatusBadge } from "@/components/ui/status-badge";
 
 export const metadata: Metadata = { title: "Productos · TADUKA" };
 
-type Filters = { q: string; estado: "" | "por_vencer" | "vencido"; categoria: string };
-
 const first = (v: string | string[] | undefined) => (typeof v === "string" ? v : "");
 
 export default function ProductsPage({ searchParams }: PageProps<"/products">) {
@@ -39,16 +37,6 @@ export default function ProductsPage({ searchParams }: PageProps<"/products">) {
   );
 }
 
-function href(filters: Filters, patch: Partial<Filters>) {
-  const next = { ...filters, ...patch };
-  const params = new URLSearchParams();
-  if (next.q) params.set("q", next.q);
-  if (next.estado) params.set("estado", next.estado);
-  if (next.categoria) params.set("categoria", next.categoria);
-  const qs = params.toString();
-  return qs ? `/products?${qs}` : "/products";
-}
-
 const RANK: Record<LotStatus, number> = { vencido: 0, por_vencer: 1, vigente: 2 };
 
 async function Products({
@@ -58,12 +46,7 @@ async function Products({
 }) {
   await connection();
   const raw = await searchParams;
-  const estadoParam = first(raw.estado);
-  const filters: Filters = {
-    q: first(raw.q).trim().slice(0, 80),
-    estado: estadoParam === "por_vencer" || estadoParam === "vencido" ? estadoParam : "",
-    categoria: first(raw.categoria).slice(0, 60),
-  };
+  const filters = { q: first(raw.q).trim().slice(0, 80) };
 
   const { user, membership, storeError } = await getCurrentContext();
   const initial = (user.email ?? "?").slice(0, 1).toUpperCase();
@@ -71,8 +54,7 @@ async function Products({
   if (!membership) return <StoreRequired />;
 
   const store = membership.store;
-  const [categories, productsResult, lotsResult, photos] = await Promise.all([
-    listCategories(store.id).catch(() => [] as CategoryRow[]),
+  const [productsResult, lotsResult, photos] = await Promise.all([
     listProducts(store.id).then(
       (data) => ({ data, error: false }),
       () => ({ data: [] as ProductRow[], error: true }),
@@ -90,7 +72,6 @@ async function Products({
   const enriched = products.map((p) => ({ p, s: summaries.get(p.id) as ProductSummary | undefined }));
 
   const counts = {
-    all: products.length,
     por_vencer: enriched.filter((x) => (x.s?.counts.por_vencer ?? 0) > 0).length,
     vencido: enriched.filter((x) => (x.s?.counts.vencido ?? 0) > 0).length,
   };
@@ -98,8 +79,6 @@ async function Products({
   const q = filters.q.toLowerCase();
   const visible = enriched
     .filter(({ p, s }) => {
-      if (filters.estado && (s?.counts[filters.estado] ?? 0) === 0) return false;
-      if (filters.categoria && p.category_name !== filters.categoria) return false;
       if (q) {
         const hay = [p.name, p.category_name ?? "", ...(s?.codes ?? [])].join(" ").toLowerCase();
         if (!hay.includes(q)) return false;
@@ -115,18 +94,6 @@ async function Products({
       const eb = b.s?.nextLot?.expiration_date ?? "9999";
       return ea.localeCompare(eb) || a.p.name.localeCompare(b.p.name);
     });
-
-  const chip = (active: boolean, tone: string) =>
-    `inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-primary ${
-      active ? "bg-action text-white shadow-card" : tone
-    }`;
-  const countPill = (n: number, active: boolean) => (
-    <span
-      className={`rounded-full px-1.5 text-xs ${active ? "bg-white/25 text-white" : "bg-white/80 text-text-primary"}`}
-    >
-      {n}
-    </span>
-  );
 
   return (
     <>
@@ -148,8 +115,6 @@ async function Products({
 
       {/* Búsqueda */}
       <form action="/products" method="get" role="search" className="tadu-rise mb-3">
-        {filters.estado && <input type="hidden" name="estado" value={filters.estado} />}
-        {filters.categoria && <input type="hidden" name="categoria" value={filters.categoria} />}
         <label htmlFor="q" className="sr-only">
           Buscar por producto, categoría o lote
         </label>
@@ -173,46 +138,7 @@ async function Products({
         </div>
       </form>
 
-      {/* Filtros por estado */}
-      <nav aria-label="Filtrar por estado" className="tadu-scroll-x -mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1">
-        <Link href={href(filters, { estado: "" })} className={chip(!filters.estado, "bg-surface-muted text-text-primary")} aria-current={!filters.estado ? "true" : undefined}>
-          Todos {countPill(counts.all, !filters.estado)}
-        </Link>
-        <Link href={href(filters, { estado: "por_vencer" })} className={chip(filters.estado === "por_vencer", "bg-orange-soft text-orange")} aria-current={filters.estado === "por_vencer" ? "true" : undefined}>
-          Por vencer {countPill(counts.por_vencer, filters.estado === "por_vencer")}
-        </Link>
-        <Link href={href(filters, { estado: "vencido" })} className={chip(filters.estado === "vencido", "bg-danger-soft text-danger")} aria-current={filters.estado === "vencido" ? "true" : undefined}>
-          Vencidos {countPill(counts.vencido, filters.estado === "vencido")}
-        </Link>
-      </nav>
-
-      {/* Categorías */}
-      {categories.length > 0 && (
-        <nav aria-label="Filtrar por categoría" className="tadu-scroll-x -mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1">
-          <Link
-            href={href(filters, { categoria: "" })}
-            className={`inline-flex min-h-9 shrink-0 items-center rounded-full border px-3.5 text-xs font-semibold whitespace-nowrap transition-colors ${!filters.categoria ? "border-primary bg-primary text-white" : "border-border bg-surface text-text-secondary hover:bg-surface-muted"}`}
-          >
-            Todas las categorías
-          </Link>
-          {categories.map((c) => (
-            <Link
-              key={c.id}
-              href={href(filters, { categoria: c.name })}
-              className={`inline-flex min-h-9 shrink-0 items-center gap-1 rounded-full border px-3.5 text-xs font-semibold whitespace-nowrap transition-colors ${filters.categoria === c.name ? "border-primary bg-primary text-white" : "border-border bg-surface text-text-secondary hover:bg-surface-muted"}`}
-            >
-              <Icon name="tag" className="size-3" />
-              {c.name}
-            </Link>
-          ))}
-        </nav>
-      )}
-
-      <div className="mb-3 flex items-center justify-between gap-3 text-xs text-text-secondary">
-        <span className="inline-flex items-center gap-1.5">
-          <Icon name="clock" className="size-3.5" />
-          Primero los que vencen antes
-        </span>
+      <div className="mb-3 flex items-center justify-end gap-3 text-xs text-text-secondary">
         <span className="font-semibold">
           {visible.length} {visible.length === 1 ? "artículo" : "artículos"}
         </span>
@@ -236,10 +162,10 @@ async function Products({
         <EmptyState
           icon="search"
           title="Sin resultados"
-          description="Ningún producto coincide con la búsqueda o los filtros elegidos."
+          description="Ningún producto coincide con la búsqueda."
           action={
             <Link href="/products" className={buttonClass("soft")}>
-              Quitar filtros
+              Quitar búsqueda
             </Link>
           }
         />
@@ -290,17 +216,6 @@ async function Products({
           ))}
         </ul>
       )}
-
-      {/* Acción principal flotante */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-28 z-20 flex justify-center md:bottom-8 md:left-64">
-        <Link
-          href="/lots/new"
-          className={`pointer-events-auto ${buttonClass("primary", "lg", "shadow-float")}`}
-        >
-          <Icon name="package-plus" className="size-5" />
-          Registrar lote nuevo
-        </Link>
-      </div>
     </>
   );
 }
