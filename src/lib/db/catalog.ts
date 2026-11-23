@@ -119,3 +119,17 @@ export async function updateProduct(
   );
   return result.affectedRows > 0;
 }
+
+// Busca un producto de la tienda por su código de barras. Un UPC-A (12 dígitos) es un EAN-13 con
+// un 0 al inicio: se prueban ambas formas para no fallar según cómo se haya guardado o leído.
+export async function findProductIdByBarcode(storeId: string, code: string): Promise<string | null> {
+  const variants = new Set([code]);
+  if (/^\d{12}$/.test(code)) variants.add(`0${code}`);
+  if (/^0\d{12}$/.test(code)) variants.add(code.slice(1));
+  const list = [...variants];
+  const row = await db.queryOne<{ id: string }>(
+    `SELECT id FROM products WHERE store_id = ? AND barcode IN (${list.map(() => "?").join(", ")}) LIMIT 1`,
+    [storeId, ...list],
+  );
+  return row?.id ?? null;
+}

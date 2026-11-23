@@ -74,7 +74,9 @@ async function Products({
   const visible = enriched
     .filter(({ p, s }) => {
       if (q) {
-        const hay = [p.name, p.category_name ?? "", ...(s?.codes ?? [])].join(" ").toLowerCase();
+        const hay = [p.name, p.category_name ?? "", p.barcode ?? "", ...(s?.codes ?? [])]
+          .join(" ")
+          .toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;

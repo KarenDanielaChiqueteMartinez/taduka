@@ -13,6 +13,7 @@ import {
   priorityLots,
 } from "@/lib/inventory/summary";
 import { AppShell } from "@/components/app/app-shell";
+import { HomeScan } from "@/components/app/home-scan";
 import { LoadError, LoadingState } from "@/components/app/page-states";
 import { ScreenHeader } from "@/components/app/screen-header";
 import { CreateStoreForm } from "@/components/stores/create-store-form";
@@ -147,13 +148,7 @@ async function Dashboard() {
               placeholder="Buscar producto o lote…"
               className="h-11 min-w-0 flex-1 bg-transparent text-base text-text-primary outline-none placeholder:text-[#6b7587]"
             />
-            <Link
-              href="/lots/new/photo"
-              aria-label="Fotografiar nota de compra"
-              className="flex size-11 items-center justify-center rounded-2xl text-[#6b7587] transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-primary"
-            >
-              <Icon name="scan" className="size-6" />
-            </Link>
+            <HomeScan />
           </div>
         </form>
       </header>

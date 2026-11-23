@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react";
 type Props = {
   onDetect: (code: string) => void;
   onCancel: () => void;
+  // Texto del botón que sale del escáner (por defecto: escribir el código a mano).
+  cancelLabel?: string;
 };
 
 const CAMERA_ERROR =
@@ -39,7 +41,7 @@ async function createReader() {
 
 // Lee códigos de barras con la cámara trasera, en vivo o a partir de una foto.
 // Requiere HTTPS.
-export function BarcodeScanner({ onDetect, onCancel }: Props) {
+export function BarcodeScanner({ onDetect, onCancel, cancelLabel = "Escribir el código a mano" }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [live, setLive] = useState(true);
   const [starting, setStarting] = useState(true);
@@ -210,7 +212,7 @@ export function BarcodeScanner({ onDetect, onCancel }: Props) {
         onClick={onCancel}
         className="min-h-12 w-full rounded-control bg-surface-muted text-base font-semibold text-text-primary transition-colors hover:bg-border/60 focus-visible:outline-2 focus-visible:outline-primary"
       >
-        Escribir el código a mano
+        {cancelLabel}
       </button>
     </div>
   );

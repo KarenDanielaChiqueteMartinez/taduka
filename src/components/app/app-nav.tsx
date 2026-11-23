@@ -4,10 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon, type IconName } from "@/components/ui/icons";
 
-// Secciones principales. "Productos" agrupa el catálogo y los lotes; "Más" agrupa categorías y cuenta.
+// Secciones principales. "Más" agrupa categorías y cuenta.
 const ITEMS: { href: string; label: string; icon: IconName; match: string[] }[] = [
   { href: "/dashboard", label: "Inicio", icon: "home", match: ["/dashboard"] },
-  { href: "/products", label: "Productos", icon: "archive", match: ["/products", "/lots"] },
+  { href: "/products", label: "Productos", icon: "archive", match: ["/products"] },
+  { href: "/lots", label: "Lotes", icon: "calendar", match: ["/lots"] },
   { href: "/activity", label: "Actividad", icon: "history", match: ["/activity"] },
   { href: "/more", label: "Más", icon: "more", match: ["/more", "/categories"] },
 ];

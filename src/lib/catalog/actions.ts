@@ -6,6 +6,7 @@ import { isUnit } from "@/lib/catalog/units";
 import {
   createCategory as createCategory_,
   createProduct as createProduct_,
+  findProductIdByBarcode,
   getProduct,
   updateProduct as updateProduct_,
   type ProductInput,
@@ -187,6 +188,22 @@ export async function createProduct(
     success: `Producto «${values.name}» creado.`,
     warning,
   };
+}
+
+// Búsqueda por código de barras (escáner de Inicio): solo productos de la tienda de la sesión.
+export async function findProductByBarcode(code: string): Promise<{ id?: string; error?: string }> {
+  const clean = String(code ?? "").trim().slice(0, MAX_BARCODE);
+  if (!clean) return { error: "No se leyó ningún código." };
+
+  const { membership } = await getCurrentContext();
+  if (!membership) return { error: NO_STORE };
+
+  try {
+    const id = await findProductIdByBarcode(membership.store.id, clean);
+    return id ? { id } : { error: `No encontramos un producto con el código ${clean}.` };
+  } catch {
+    return { error: "No pudimos buscar el producto. Inténtalo de nuevo." };
+  }
 }
 
 export async function updateProduct(
