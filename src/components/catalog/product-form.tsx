@@ -23,9 +23,14 @@ import { useToast } from "@/components/ui/toast";
 
 type Props = {
   categories: { id: string; name: string }[];
-  // Con producto, el formulario edita; sin él, crea. La foto se cambia desde la ficha.
+  // Con producto, el formulario edita; sin él, crea.
   product?: ProductRow;
+  // Foto actual del producto (solo al editar).
+  photoUrl?: string | null;
 };
+
+// Valor especial de la última opción del selector de categoría; nunca se envía al servidor.
+const NEW_CATEGORY = "__new__";
 
 const rowControl =
   "min-w-0 flex-1 bg-transparent text-right text-base font-semibold text-action outline-none placeholder:font-semibold placeholder:text-action/70 aria-[invalid=true]:text-danger";
@@ -99,7 +104,7 @@ function RowSelect({
   );
 }
 
-export function ProductForm({ categories, product }: Props) {
+export function ProductForm({ categories, product, photoUrl }: Props) {
   const isEdit = Boolean(product);
   const [state, action] = useActionState<CatalogFormState, FormData>(
     product ? updateProduct.bind(null, product.id) : createProduct,
@@ -139,12 +144,9 @@ export function ProductForm({ categories, product }: Props) {
   // La categoría es obligatoria: sin ninguna creada, se abre la ventana para crear la primera.
   const [dialogOpen, setDialogOpen] = useState(categories.length === 0);
 
-  // "Más detalles" arranca abierto si ya hay datos opcionales (editar) o si el servidor
-  // rechazó alguno de esos campos.
-  const hasDetails = Boolean(
-    initial.description || initial.barcode || initial.location || initial.brand || initial.supplier,
-  );
-  const [moreOpen, setMoreOpen] = useState(hasDetails);
+  // "Más detalles" arranca abierto al editar (para ver y completar los datos) o si el servidor
+  // rechazó alguno de esos campos; al crear arranca plegado.
+  const [moreOpen, setMoreOpen] = useState(isEdit);
   const detailsHaveError = Boolean(
     errors?.description || errors?.barcode || errors?.location || errors?.brand || errors?.supplier,
   );
@@ -222,7 +224,7 @@ export function ProductForm({ categories, product }: Props) {
         )}
       </div>
 
-      {!isEdit && <PhotoPicker />}
+      <PhotoPicker initialUrl={photoUrl ?? null} />
 
       <div className="divide-y divide-border rounded-control border border-border bg-surface">
         <Row id="categoryId" label="Categoría" error={errors?.categoryId}>
@@ -242,7 +244,11 @@ export function ProductForm({ categories, product }: Props) {
               error={errors?.categoryId}
               required
               value={categoryId}
-              onChange={(event) => setCategoryId(event.target.value)}
+              onChange={(event) => {
+                // "Nueva categoría" no cambia la selección: abre la ventana y, si se crea, la elige.
+                if (event.target.value === NEW_CATEGORY) setDialogOpen(true);
+                else setCategoryId(event.target.value);
+              }}
             >
               <option value="" disabled>
                 Elige una categoría
@@ -252,6 +258,7 @@ export function ProductForm({ categories, product }: Props) {
                   {c.name}
                 </option>
               ))}
+              <option value={NEW_CATEGORY}>+ Nueva categoría…</option>
             </RowSelect>
           )}
         </Row>

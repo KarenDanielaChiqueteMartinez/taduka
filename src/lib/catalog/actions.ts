@@ -10,6 +10,7 @@ import {
   updateProduct as updateProduct_,
   type ProductInput,
 } from "@/lib/db/catalog";
+import { deletePhoto } from "@/lib/db/photos";
 import { isCheckViolation, isDuplicate, isForeignKey, isUuid } from "@/lib/db/pool";
 import { getCurrentContext } from "@/lib/stores/context";
 
@@ -217,8 +218,24 @@ export async function updateProduct(
     return productError(error, values);
   }
 
+  // Foto: una nueva reemplaza a la actual; "removePhoto" la quita. Si falla, los datos ya se
+  // guardaron y se avisa sin deshacerlos.
+  let warning: string | undefined;
+  const photo = formData.get("photo");
+  if (photo instanceof File && photo.size > 0) {
+    const saved = await savePhoto(storeId, productId, photo);
+    if (!saved.ok) warning = `Los cambios se guardaron, pero la foto no: ${saved.error}`;
+  } else if (formData.get("removePhoto") === "1") {
+    try {
+      await deletePhoto(storeId, productId);
+    } catch {
+      warning = "Los cambios se guardaron, pero no pudimos quitar la foto. Inténtalo desde la ficha.";
+    }
+  }
+
   revalidatePath("/products");
   revalidatePath(`/products/${productId}`);
+  revalidatePath("/dashboard");
   // La pantalla muestra el aviso y vuelve a la ficha (un redirect del servidor no puede avisar).
-  return { values, success: "Cambios guardados." };
+  return { values, success: "Cambios guardados.", warning };
 }

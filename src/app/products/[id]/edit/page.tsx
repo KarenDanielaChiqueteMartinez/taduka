@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { getProduct, listCategories } from "@/lib/db/catalog";
+import { photoUrl } from "@/lib/catalog/photos";
+import { getPhotoVersions } from "@/lib/db/photos";
 import { isUuid } from "@/lib/db/pool";
 import { getCurrentContext } from "@/lib/stores/context";
 import { AppShell } from "@/components/app/app-shell";
@@ -28,9 +30,10 @@ async function EditProduct({ params }: { params: Promise<{ id: string }> }) {
   if (storeError) return <LoadError message="No pudimos cargar tu tienda." />;
   if (!membership) return <StoreRequired />;
 
-  const [product, categories] = await Promise.all([
+  const [product, categories, photos] = await Promise.all([
     isUuid(id) ? getProduct(membership.store.id, id).catch(() => null) : null,
     listCategories(membership.store.id).catch(() => []),
+    getPhotoVersions(membership.store.id).catch(() => new Map<string, number>()),
   ]);
 
   if (!product) {
@@ -46,7 +49,11 @@ async function EditProduct({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <div className="tadu-rise">
-      <ProductForm categories={categories} product={product} />
+      <ProductForm
+        categories={categories}
+        product={product}
+        photoUrl={photos.has(id) ? photoUrl(id, photos.get(id)!) : null}
+      />
     </div>
   );
 }

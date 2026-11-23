@@ -12,13 +12,23 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 // Campo de foto para el formulario de producto: toma o elige una imagen, la recorta en cuadrado,
 // la reduce en el navegador y la deja en el mismo campo de archivo del formulario (name="photo").
 // El input vive siempre en el mismo lugar del árbol para no perder el archivo al cambiar de estado.
-export function PhotoPicker({ name = "photo" }: { name?: string }) {
+export function PhotoPicker({
+  name = "photo",
+  initialUrl = null,
+}: {
+  name?: string;
+  // Foto que el producto ya tiene (al editar). Se muestra hasta que se cambie o se quite.
+  initialUrl?: string | null;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const urlRef = useRef<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [sizeKb, setSizeKb] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // La foto actual se quitó (el servidor la borra al guardar).
+  const [removed, setRemoved] = useState(false);
+  const shown = preview ?? (removed ? null : initialUrl);
 
   const clearPreview = () => {
     if (urlRef.current) URL.revokeObjectURL(urlRef.current);
@@ -35,6 +45,7 @@ export function PhotoPicker({ name = "photo" }: { name?: string }) {
       setPreview(null);
       setSizeKb(null);
       setError(null);
+      setRemoved(false);
     };
     form?.addEventListener("reset", onReset);
     return () => {
@@ -67,10 +78,13 @@ export function PhotoPicker({ name = "photo" }: { name?: string }) {
     }
   }
 
+  // La X quita lo que se ve: primero la foto nueva (y reaparece la actual); si ya no hay nueva,
+  // quita la actual.
   function remove() {
     if (inputRef.current) inputRef.current.value = "";
-    clearPreview();
     setError(null);
+    if (preview) clearPreview();
+    else setRemoved(true);
   }
 
   const choose = () => inputRef.current?.click();
@@ -87,6 +101,7 @@ export function PhotoPicker({ name = "photo" }: { name?: string }) {
         aria-label="Fotografía del producto"
         className="sr-only"
       />
+      <input type="hidden" name="removePhoto" value={removed && !preview ? "1" : ""} />
 
       {busy ? (
         <div
@@ -100,12 +115,12 @@ export function PhotoPicker({ name = "photo" }: { name?: string }) {
           />
           <span className="text-sm font-semibold">Procesando foto…</span>
         </div>
-      ) : preview ? (
+      ) : shown ? (
         <div className="space-y-3">
           <div className="tadu-pop relative mx-auto aspect-square w-full max-w-[16rem]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={preview}
+              src={shown}
               alt="Vista previa de la foto del producto"
               className="size-full rounded-card border border-border object-cover shadow-card"
             />
@@ -127,7 +142,7 @@ export function PhotoPicker({ name = "photo" }: { name?: string }) {
               <Icon name="camera" className="size-4" />
               Cambiar fotografía
             </button>
-            {sizeKb !== null && <span className="text-xs text-text-secondary">Cuadrada · {sizeKb} KB</span>}
+            {preview && sizeKb !== null && <span className="text-xs text-text-secondary">Cuadrada · {sizeKb} KB</span>}
           </div>
         </div>
       ) : (
