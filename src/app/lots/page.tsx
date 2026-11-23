@@ -5,13 +5,12 @@ import { connection } from "next/server";
 import { formatDate, formatQty } from "@/lib/format";
 import { listProducts, type ProductRow } from "@/lib/db/catalog";
 import { listLots, type LotView } from "@/lib/db/lots";
-import { countByStatus, expiryText } from "@/lib/inventory/summary";
+import { expiryText } from "@/lib/inventory/summary";
 import { getCurrentContext } from "@/lib/stores/context";
 import { AppShell } from "@/components/app/app-shell";
 import { EmptyState, LoadError, LoadingState, StoreRequired } from "@/components/app/page-states";
 import { ScreenHeader } from "@/components/app/screen-header";
-import { buttonClass, LinkButton } from "@/components/ui/button";
-import { Icon } from "@/components/ui/icons";
+import { buttonClass } from "@/components/ui/button";
 import { SelectField } from "@/components/ui/select-field";
 import { STATUS_UI, StatusBadge } from "@/components/ui/status-badge";
 
@@ -57,37 +56,14 @@ async function Lots({
   const products = productsResult.data;
   const lots = lotsResult.lots;
   const selectedProduct = products.find((p) => p.id === productParam);
-  const counts = countByStatus(lots);
 
   return (
     <>
       <ScreenHeader
         title={selectedProduct ? selectedProduct.name : "Lotes"}
         storeName={store.name}
-        backHref={selectedProduct ? `/products/${selectedProduct.id}` : "/products"}
+        backHref="/dashboard"
       />
-
-      <p className="tadu-rise mb-4 text-sm text-text-secondary">
-        Cada lote tiene su propia caducidad y existencia. Se muestran primero los que vencen antes.
-      </p>
-
-      {/* Resumen de alertas (lotes con existencia) */}
-      {!lotsResult.error && (counts.vencido > 0 || counts.por_vencer > 0) && (
-        <div className="tadu-rise mb-4 flex flex-wrap gap-2" role="status">
-          {counts.vencido > 0 && (
-            <span className="inline-flex items-center gap-2 rounded-full bg-danger-soft px-3.5 py-2 text-sm font-bold text-danger">
-              <Icon name="x-circle" className="size-4" />
-              {counts.vencido} {counts.vencido === 1 ? "vencido con existencia" : "vencidos con existencia"}
-            </span>
-          )}
-          {counts.por_vencer > 0 && (
-            <span className="inline-flex items-center gap-2 rounded-full bg-orange-soft px-3.5 py-2 text-sm font-bold text-orange">
-              <Icon name="alert-triangle" className="size-4" />
-              {counts.por_vencer} por vencer (en {store.expiry_alert_days} {store.expiry_alert_days === 1 ? "día" : "días"} o menos)
-            </span>
-          )}
-        </div>
-      )}
 
       {/* Filtro por producto */}
       <form method="get" className="tadu-rise mb-5 flex items-end gap-2">
@@ -113,12 +89,6 @@ async function Lots({
           icon="package-plus"
           title={productParam ? "Este producto aún no tiene lotes" : "Aún no tienes lotes"}
           description="Registra una entrada para empezar a vigilar sus caducidades."
-          action={
-            <LinkButton href={productParam ? `/lots/new?product=${productParam}` : "/lots/new"}>
-              <Icon name="package-plus" className="size-4" />
-              Registrar lote
-            </LinkButton>
-          }
         />
       ) : (
         <ul className="space-y-3">
@@ -170,16 +140,6 @@ async function Lots({
           })}
         </ul>
       )}
-
-      <div className="pointer-events-none fixed inset-x-0 bottom-28 z-20 flex justify-center md:bottom-8 md:left-64">
-        <Link
-          href={productParam ? `/lots/new?product=${productParam}` : "/lots/new"}
-          className={`pointer-events-auto ${buttonClass("primary", "lg", "shadow-float")}`}
-        >
-          <Icon name="package-plus" className="size-5" />
-          Registrar lote nuevo
-        </Link>
-      </div>
     </>
   );
 }
