@@ -92,12 +92,9 @@ async function Dashboard() {
   const now = new Date();
   const name = displayName(user);
 
-  const first = priority[0];
-  const countHref = first ? `/products/${first.product_id}/count?lot=${first.id}` : "/products";
-
   const shortcuts = [
     { href: "/lots/new", label: "Registrar entrada", icon: "package-plus", primary: true },
-    { href: countHref, label: "Contar unidades", icon: "clipboard-check", primary: false },
+    { href: "/count", label: "Contar unidades", icon: "clipboard-check", primary: false },
     { href: "/lots/new/photo", label: "Fotografiar nota", icon: "camera", primary: false },
     { href: "/lots", label: "Ver lotes", icon: "calendar", primary: false },
   ] as const;

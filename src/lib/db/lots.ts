@@ -155,3 +155,11 @@ export function listEntries(storeId: string, limit = 60) {
     [storeId, Math.max(1, Math.min(limit, 200))],
   );
 }
+
+// Movimiento recién registrado (cantidades reales antes y después, calculadas en la base).
+export function getMovement(storeId: string, id: string) {
+  return db.queryOne<{ quantity_before: number; quantity_after: number; difference: number }>(
+    "SELECT quantity_before, quantity_after, difference FROM inventory_movements WHERE id = ? AND store_id = ?",
+    [id, storeId],
+  );
+}

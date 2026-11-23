@@ -46,7 +46,9 @@ async function Count({
   if (storeError) return <LoadError message="No pudimos cargar tu tienda." />;
   if (!membership) return <StoreRequired />;
   const store = membership.store;
-  const backHref = isUuid(id) ? `/products/${id}` : "/products";
+  // Si se llegó desde el menú "Contar unidades" (?from=list), regresa a ese menú; si no, a la ficha.
+  const backHref =
+    raw.from === "list" ? "/count" : isUuid(id) ? `/products/${id}` : "/products";
 
   const missing = (
     <>
@@ -75,12 +77,19 @@ async function Count({
   const lot = candidates.find((l) => l.id === lotParam) ?? candidates[0];
   if (!lot) return missing;
 
+  // La cabecera fija (con "Confirmar conteo") vive dentro del formulario del panel; el producto y
+  // el lote se pintan bajo ella.
   return (
-    <>
-      <ScreenHeader title="Conteo físico" storeName={store.name} backHref={backHref} />
-
-      {/* Producto y lote */}
-      <section className="tadu-rise mb-4 flex items-center gap-3 rounded-card bg-surface-muted p-3.5">
+    <CountPanel
+      key={lot.id}
+      lotId={lot.id}
+      productId={id}
+      unit={lot.unit}
+      unitLabel={unitLabel(lot.unit)}
+      previous={Number(lot.current_quantity)}
+      backHref={backHref}
+    >
+      <section className="tadu-rise flex items-center gap-3 rounded-card bg-surface-muted p-3.5">
         <ProductThumb
           name={lot.product_name}
           status={lot.status}
@@ -105,13 +114,6 @@ async function Count({
           <p className="mt-1 text-xs text-text-secondary">Caduca el {formatDate(lot.expiration_date)}</p>
         </div>
       </section>
-
-      <CountPanel
-        key={lot.id}
-        unitLabel={unitLabel(lot.unit)}
-        previous={Number(lot.current_quantity)}
-        backHref={backHref}
-      />
-    </>
+    </CountPanel>
   );
 }

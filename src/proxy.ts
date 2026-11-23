@@ -3,7 +3,7 @@ import { hashToken, SESSION_COOKIE } from "@/lib/auth/tokens";
 import { findSessionUser } from "@/lib/db/users";
 
 const AUTH_ROUTES = ["/login", "/register"];
-const PROTECTED_ROUTES = ["/dashboard", "/products", "/categories", "/lots", "/activity", "/more"];
+const PROTECTED_ROUTES = ["/dashboard", "/products", "/categories", "/lots", "/count", "/activity", "/more"];
 
 function matches(pathname: string, routes: string[]) {
   return routes.some((r) => pathname === r || pathname.startsWith(`${r}/`));
