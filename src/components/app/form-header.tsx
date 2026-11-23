@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Icon } from "@/components/ui/icons";
+import { Icon, type IconName } from "@/components/ui/icons";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 type Props = {
@@ -7,12 +7,14 @@ type Props = {
   cancelHref: string;
   submitLabel: string;
   pendingLabel: string;
+  // Con ícono, en pantallas angostas el botón se reduce a ese ícono (igual que "Cancelar" es una X).
+  submitIcon?: IconName;
 };
 
 // Cabecera fija de los formularios de captura. Debe renderizarse DENTRO del <form>: el botón de
 // la derecha lo envía. En pantallas angostas "Cancelar" es una X para que el título quepa; tres
 // columnas con los lados de igual ancho mantienen el título centrado.
-export function FormHeader({ title, cancelHref, submitLabel, pendingLabel }: Props) {
+export function FormHeader({ title, cancelHref, submitLabel, pendingLabel, submitIcon }: Props) {
   return (
     <header className="sticky top-0 z-30 -mx-4 -mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3 bg-background px-4 py-3 sm:-mx-6 sm:px-6 md:-mt-8">
       <div className="flex justify-start">
@@ -29,11 +31,15 @@ export function FormHeader({ title, cancelHref, submitLabel, pendingLabel }: Pro
       <h1 className="min-w-0 truncate text-center text-lg font-bold tracking-tight sm:text-xl">{title}</h1>
       <div className="flex justify-end">
         <SubmitButton
-          pendingLabel={pendingLabel}
+          pendingLabel={submitIcon ? <span className="hidden sm:inline">{pendingLabel}</span> : pendingLabel}
+          ariaLabel={submitLabel}
           variant="soft"
-          className="min-h-11 shrink-0 rounded-full px-5 text-base"
+          className={`min-h-11 shrink-0 rounded-full text-base ${
+            submitIcon ? "size-11 !px-0 sm:size-auto sm:!px-5" : "px-5"
+          }`}
         >
-          {submitLabel}
+          {submitIcon && <Icon name={submitIcon} className="size-5 sm:hidden" strokeWidth={2.6} />}
+          <span className={submitIcon ? "hidden sm:inline" : undefined}>{submitLabel}</span>
         </SubmitButton>
       </div>
     </header>

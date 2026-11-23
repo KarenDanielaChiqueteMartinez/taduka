@@ -83,6 +83,7 @@ export function CountPanel({ lotId, productId, unit, unitLabel, previous, backHr
           title="Conteo físico"
           cancelHref={backHref}
           submitLabel="Confirmar conteo"
+          submitIcon="check"
           pendingLabel="Guardando…"
         />
 
@@ -174,11 +175,6 @@ export function CountPanel({ lotId, productId, unit, unitLabel, previous, backHr
               </p>
             </div>
           </div>
-          {diff !== 0 && (
-            <p className="mt-3 text-xs text-text-secondary">
-              Una diferencia de conteo es un ajuste de inventario, no una venta.
-            </p>
-          )}
         </section>
       </form>
 

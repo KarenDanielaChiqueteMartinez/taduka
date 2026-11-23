@@ -142,7 +142,9 @@ body {
 input[type="date"] {
   -webkit-appearance: none;
   appearance: none;
-  display: block;
+  /* Centra el valor verticalmente: sin apariencia nativa, WebKit lo deja pegado arriba. */
+  display: flex;
+  align-items: center;
   width: 100%;
   min-width: 0;
   max-width: 100%;
@@ -150,6 +152,8 @@ input[type="date"] {
 }
 input[type="date"]::-webkit-date-and-time-value {
   text-align: left;
+  margin: 0;
+  padding: 0;
   min-height: 1.5em;
 }
 /* Sin apariencia nativa, iOS deja el campo vacío en blanco: se muestra una indicación. */

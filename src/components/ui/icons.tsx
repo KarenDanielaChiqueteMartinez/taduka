@@ -48,6 +48,7 @@ const PATHS: Record<string, ReactNode> = {
     </>
   ),
   minus: <path d="M5 12h14" />,
+  check: <path d="M20 6 9 17l-5-5" />,
   x: (
     <>
       <path d="M18 6 6 18" />
