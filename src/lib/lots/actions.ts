@@ -91,6 +91,8 @@ export async function createLot(
 
   revalidatePath("/lots");
   revalidatePath("/products");
+  revalidatePath(`/products/${productId}`);
+  revalidatePath("/dashboard");
   return {
     values: { productId, entryDate, supplierLotCode: "", expirationDate: "", quantity: "" },
     success: "Lote registrado.",

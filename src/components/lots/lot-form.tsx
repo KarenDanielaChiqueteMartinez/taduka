@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { createLot, type LotFormState } from "@/lib/lots/actions";
 import { formatDate } from "@/lib/format";
 import { buttonClass } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import { Icon } from "@/components/ui/icons";
 import { ProductThumb } from "@/components/ui/product-thumb";
 import { SelectField } from "@/components/ui/select-field";
 import { FormHeader } from "@/components/app/form-header";
-import Link from "next/link";
+import { useToast } from "@/components/ui/toast";
 
 type Product = { id: string; name: string; unitLabel: string };
 
@@ -51,6 +52,18 @@ export function LotForm({ products, today, alertDays, defaultProductId }: Props)
   const [state, action] = useActionState<LotFormState, FormData>(createLot, {});
   const formRef = useRef<HTMLFormElement>(null);
   const v = state.values;
+  const router = useRouter();
+  const toast = useToast();
+
+  // Cancelar y el regreso tras guardar van al producto de origen, o a Lotes si no hay.
+  const backHref = defaultProductId ? `/products/${defaultProductId}` : "/lots";
+
+  // Lote guardado: avisa con una notificación y regresa a la pantalla anterior.
+  useEffect(() => {
+    if (!state.success) return;
+    toast.show(state.success);
+    router.push(backHref);
+  }, [state, toast, router, backHref]);
 
   const read = (form: HTMLFormElement): View => {
     const data = new FormData(form);
@@ -103,7 +116,7 @@ export function LotForm({ products, today, alertDays, defaultProductId }: Props)
     >
       <FormHeader
         title="Registrar lote"
-        cancelHref={defaultProductId ? `/products/${defaultProductId}` : "/lots"}
+        cancelHref={backHref}
         submitLabel="Crear"
         pendingLabel="Creando…"
       />
@@ -112,17 +125,6 @@ export function LotForm({ products, today, alertDays, defaultProductId }: Props)
         <p role="alert" className="flex items-start gap-2 rounded-control bg-danger-soft px-3.5 py-3 text-sm font-medium text-danger">
           <Icon name="alert-triangle" className="mt-0.5 size-4" />
           {state.error}
-        </p>
-      )}
-      {state.success && (
-        <p role="status" className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-control bg-action-soft px-3.5 py-3 text-sm font-semibold text-action">
-          <span className="inline-flex items-center gap-2">
-            <Icon name="check-circle" className="size-4" />
-            {state.success}
-          </span>
-          <Link href="/lots" className="underline underline-offset-4">
-            Ver lotes
-          </Link>
         </p>
       )}
 
