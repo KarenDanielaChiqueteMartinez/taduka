@@ -71,7 +71,6 @@ async function NewLot({
     <LotForm
       products={active.map((p) => ({ id: p.id, name: p.name, unitLabel: unitLabel(p.unit) }))}
       today={todayInStoreTimezone()}
-      alertDays={store.expiry_alert_days}
       defaultProductId={productParam || undefined}
     />
   );

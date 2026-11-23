@@ -137,3 +137,25 @@ body {
     animation: none;
   }
 }
+
+/* Campos de fecha: en Safari de iPhone ignoran el ancho del contenedor y se salen de la tarjeta. */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  text-align: left;
+}
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: 1.5em;
+}
+/* Sin apariencia nativa, iOS deja el campo vacío en blanco: se muestra una indicación. */
+@supports (-webkit-touch-callout: none) {
+  input[type="date"]:required:invalid::before {
+    content: "Selecciona la fecha";
+    color: var(--color-text-secondary);
+  }
+}

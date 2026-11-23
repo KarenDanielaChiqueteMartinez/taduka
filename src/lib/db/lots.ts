@@ -38,7 +38,8 @@ export function listLots(storeId: string, options: { productId?: string; limit?:
 
 export type LotInput = {
   productId: string;
-  supplierLotCode: string | null;
+  // Si no se indica, el disparador lots_bi genera el código del lote.
+  supplierLotCode?: string | null;
   entryDate: string; // YYYY-MM-DD
   expirationDate: string; // YYYY-MM-DD
   quantity: string; // decimal con hasta 3 decimales
@@ -51,7 +52,7 @@ export async function createLot(storeId: string, input: LotInput): Promise<strin
   await db.exec(
     `INSERT INTO lots (id, store_id, product_id, supplier_lot_code, entry_date, expiration_date, initial_quantity)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [id, storeId, input.productId, input.supplierLotCode, input.entryDate, input.expirationDate, input.quantity],
+    [id, storeId, input.productId, input.supplierLotCode ?? null, input.entryDate, input.expirationDate, input.quantity],
   );
   return id;
 }

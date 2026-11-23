@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { createLot, type LotFormState } from "@/lib/lots/actions";
-import { formatDate } from "@/lib/format";
 import { buttonClass } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Icon } from "@/components/ui/icons";
@@ -17,7 +16,6 @@ type Product = { id: string; name: string; unitLabel: string };
 type Props = {
   products: Product[];
   today: string;
-  alertDays: number;
   defaultProductId?: string;
 };
 
@@ -38,17 +36,13 @@ function addDays(iso: string, days: number) {
   return d.toISOString().slice(0, 10);
 }
 
-function daysBetween(from: string, to: string) {
-  return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
-}
-
 const card = "tadu-rise rounded-card border border-border/70 bg-surface p-4 shadow-card";
 const cardTitle = "mb-3 flex items-center gap-2 text-xs font-bold tracking-wider text-text-secondary uppercase";
 
-// Captura guiada del lote. Los nombres de campo (productId, quantity, supplierLotCode,
-// entryDate, expirationDate) y la acción createLot no cambian; los controles solo escriben
-// en los mismos campos del formulario.
-export function LotForm({ products, today, alertDays, defaultProductId }: Props) {
+// Captura guiada del lote. Los nombres de campo (productId, quantity, entryDate,
+// expirationDate) y la acción createLot no cambian; los controles solo escriben en los mismos
+// campos del formulario. El código del lote lo genera la base de datos.
+export function LotForm({ products, today, defaultProductId }: Props) {
   const [state, action] = useActionState<LotFormState, FormData>(createLot, {});
   const formRef = useRef<HTMLFormElement>(null);
   const v = state.values;
@@ -97,10 +91,6 @@ export function LotForm({ products, today, alertDays, defaultProductId }: Props)
   };
 
   const product = products.find((p) => p.id === view.productId);
-  const qty = Number(view.quantity.replace(",", "."));
-  const hasExp = /^\d{4}-\d{2}-\d{2}$/.test(view.expirationDate);
-  const daysLeft = hasExp ? daysBetween(today, view.expirationDate) : null;
-  const short = daysLeft !== null && daysLeft <= alertDays;
 
   return (
     <form
@@ -220,22 +210,6 @@ export function LotForm({ products, today, alertDays, defaultProductId }: Props)
         )}
       </section>
 
-      {/* Código de lote */}
-      <section className={card} aria-labelledby="sec-code">
-        <h2 id="sec-code" className={cardTitle}>
-          <Icon name="barcode" className="size-4" /> Código de lote
-        </h2>
-        <Field
-          id="supplierLotCode"
-          label="Código del proveedor (opcional)"
-          type="text"
-          maxLength={60}
-          placeholder="Ej. L-2410"
-          defaultValue={v?.supplierLotCode}
-          error={state.fieldErrors?.supplierLotCode}
-        />
-      </section>
-
       {/* Fechas: primero la entrada, después la caducidad */}
       <section className={card} aria-labelledby="sec-dates">
         <h2 id="sec-dates" className={cardTitle}>
@@ -278,10 +252,6 @@ export function LotForm({ products, today, alertDays, defaultProductId }: Props)
                 );
               })}
             </div>
-            <p className="flex items-start gap-2 text-xs text-text-secondary">
-              <Icon name="info" className="mt-0.5 size-3.5" />
-              Confirma la fecha tal como aparece en el empaque. TADUKA no la calcula por ti.
-            </p>
           </div>
         </div>
       </section>
@@ -295,44 +265,6 @@ export function LotForm({ products, today, alertDays, defaultProductId }: Props)
           <span>Refrigerador, anaquel, bodega…</span>
           <span className="rounded-full bg-surface px-2.5 py-1 text-xs font-semibold">Próximamente</span>
         </div>
-      </section>
-
-      {/* Resumen visual */}
-      <section className="tadu-rise rounded-card bg-primary-deep p-4 text-white shadow-card" aria-label="Resumen de la entrada">
-        <p className="mb-3 flex items-center gap-2 text-xs font-bold tracking-wider text-white/70 uppercase">
-          <Icon name="clipboard-check" className="size-4" /> Resumen de la entrada
-        </p>
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-          <div>
-            <dt className="text-white/70">Producto</dt>
-            <dd className="font-bold">{product?.name ?? "—"}</dd>
-          </div>
-          <div>
-            <dt className="text-white/70">Cantidad</dt>
-            <dd className="font-bold">
-              {Number.isFinite(qty) && qty > 0 ? `${qty.toLocaleString("es-MX")} ${product?.unitLabel ?? ""}` : "—"}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-white/70">Entrada</dt>
-            <dd className="font-bold">{view.entryDate ? formatDate(view.entryDate) : "—"}</dd>
-          </div>
-          <div>
-            <dt className="text-white/70">Caduca</dt>
-            <dd className="font-bold">{hasExp ? formatDate(view.expirationDate) : "—"}</dd>
-          </div>
-        </dl>
-        {daysLeft !== null && (
-          <p
-            className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
-              daysLeft < 0 ? "bg-danger-soft text-danger" : short ? "bg-orange-soft text-orange" : "bg-action-soft text-action"
-            }`}
-          >
-            <Icon name={daysLeft < 0 ? "x-circle" : short ? "alert-triangle" : "check-circle"} className="size-3.5" strokeWidth={2.4} />
-            {daysLeft < 0 ? "Ya vencido" : short ? "Corta vigencia" : "Vigencia suficiente"}
-          </p>
-        )}
-        <p className="mt-2 text-xs text-white/60">Vista previa; el estado oficial lo calcula TADUKA al guardar.</p>
       </section>
 
       <button type="reset" className={buttonClass("ghost", "md", "w-full")}>
