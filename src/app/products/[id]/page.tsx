@@ -9,13 +9,13 @@ import { getProduct } from "@/lib/db/catalog";
 import { isUuid } from "@/lib/db/pool";
 import { listLots, type LotView } from "@/lib/db/lots";
 import { getPhotoVersions } from "@/lib/db/photos";
-import { countByStatus, expiryText, summarizeByProduct, withStock } from "@/lib/inventory/summary";
+import { countByStatus, expiryText, summarizeByProduct } from "@/lib/inventory/summary";
 import { getCurrentContext } from "@/lib/stores/context";
 import { AppShell } from "@/components/app/app-shell";
 import { EmptyState, LoadError, LoadingState, StoreRequired } from "@/components/app/page-states";
 import { ScreenHeader } from "@/components/app/screen-header";
 import { ProductPhotoEditor } from "@/components/catalog/product-photo-editor";
-import { LinkButton, buttonClass } from "@/components/ui/button";
+import { LinkButton } from "@/components/ui/button";
 import { Card, SectionTitle } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icons";
 import { STATUS_UI, StatusBadge } from "@/components/ui/status-badge";
@@ -67,7 +67,6 @@ async function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
   const lots = lotsResult.lots;
   const summary = summarizeByProduct(lots).get(id);
   const counts = countByStatus(lots);
-  const countLot = withStock(lots)[0]; // el que vence primero
   const worst = summary?.worst ?? null;
   const next = summary?.nextLot ?? null;
   const details: [string, string][] = [];
@@ -145,7 +144,7 @@ async function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
       </Card>
 
       {/* Existencias */}
-      <Card className="tadu-rise mb-4 p-4">
+      <Card className="tadu-rise mb-6 p-4">
         <p className="text-xs font-semibold tracking-wider text-text-secondary uppercase">Existencia total</p>
         <p className="mt-1 text-4xl leading-none font-bold tracking-tight">
           {formatQuantity(summary?.totalQuantity ?? 0)}
@@ -166,36 +165,9 @@ async function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
         <p className="mt-2 text-xs text-text-secondary">Lotes con existencia por estado.</p>
       </Card>
 
-      {/* Acciones */}
-      <div className="mb-6 space-y-2.5">
-        {countLot ? (
-          <LinkButton href={`/products/${id}/count?lot=${countLot.id}`} size="lg" className="w-full">
-            <Icon name="clipboard-check" className="size-5" />
-            Contar unidades
-          </LinkButton>
-        ) : (
-          <span className={buttonClass("secondary", "lg", "w-full opacity-60")} aria-disabled="true">
-            <Icon name="clipboard-check" className="size-5" />
-            Contar unidades
-          </span>
-        )}
-        <div className="grid grid-cols-2 gap-2.5">
-          <Link href={`/lots/new?product=${id}`} className={buttonClass("secondary")}>
-            <Icon name="package-plus" className="size-4" />
-            Otro lote
-          </Link>
-          <Link href="/activity" className={buttonClass("soft")}>
-            <Icon name="history" className="size-4" />
-            Movimientos
-          </Link>
-        </div>
-      </div>
-
       {/* Lotes */}
       <section aria-labelledby="lots-title">
-        <SectionTitle
-          aside={<span className="text-xs font-semibold text-text-secondary">Primero los que vencen antes</span>}
-        >
+        <SectionTitle>
           <span id="lots-title">Lotes</span>
         </SectionTitle>
         {lotsResult.error ? (

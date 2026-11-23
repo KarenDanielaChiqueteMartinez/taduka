@@ -8,7 +8,7 @@ import { Field } from "@/components/ui/field";
 import { Icon } from "@/components/ui/icons";
 import { ProductThumb } from "@/components/ui/product-thumb";
 import { SelectField } from "@/components/ui/select-field";
-import { SubmitButton } from "@/components/ui/submit-button";
+import { FormHeader } from "@/components/app/form-header";
 import Link from "next/link";
 
 type Product = { id: string; name: string; unitLabel: string };
@@ -101,6 +101,13 @@ export function LotForm({ products, today, alertDays, defaultProductId }: Props)
       }}
       className="space-y-4"
     >
+      <FormHeader
+        title="Registrar lote"
+        cancelHref={defaultProductId ? `/products/${defaultProductId}` : "/lots"}
+        submitLabel="Crear"
+        pendingLabel="Creando…"
+      />
+
       {state.error && (
         <p role="alert" className="flex items-start gap-2 rounded-control bg-danger-soft px-3.5 py-3 text-sm font-medium text-danger">
           <Icon name="alert-triangle" className="mt-0.5 size-4" />
@@ -326,10 +333,6 @@ export function LotForm({ products, today, alertDays, defaultProductId }: Props)
         <p className="mt-2 text-xs text-white/60">Vista previa; el estado oficial lo calcula TADUKA al guardar.</p>
       </section>
 
-      <SubmitButton pendingLabel="Guardando…" size="lg" className="w-full">
-        <Icon name="check-circle" className="size-5" />
-        Guardar entrada
-      </SubmitButton>
       <button type="reset" className={buttonClass("ghost", "md", "w-full")}>
         Limpiar captura
       </button>

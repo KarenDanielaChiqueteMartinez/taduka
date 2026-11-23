@@ -1,6 +1,5 @@
 ﻿"use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   useActionState,
@@ -13,12 +12,12 @@ import {
 import { createProduct, updateProduct, type CatalogFormState } from "@/lib/catalog/actions";
 import { UNITS } from "@/lib/catalog/units";
 import type { ProductRow } from "@/lib/db/catalog";
+import { FormHeader } from "@/components/app/form-header";
 import { BarcodeSheet } from "@/components/catalog/barcode-sheet";
 import { CategoryDialog } from "@/components/catalog/category-dialog";
 import { PhotoPicker } from "@/components/catalog/photo-picker";
 import { inputClass } from "@/components/ui/field";
 import { Icon } from "@/components/ui/icons";
-import { SubmitButton } from "@/components/ui/submit-button";
 import { useToast } from "@/components/ui/toast";
 
 type Props = {
@@ -164,34 +163,12 @@ export function ProductForm({ categories, product, photoUrl }: Props) {
   return (
     <>
     <form action={action} noValidate className="space-y-5">
-      {/* Cabecera fija: en pantallas angostas "Cancelar" es una X para que el título quepa. */}
-      {/* Cabecera fija: en pantallas angostas "Cancelar" es una X para que el título quepa.
-          Tres columnas con los lados de igual ancho mantienen el título centrado. */}
-      <header className="sticky top-0 z-30 -mx-4 -mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3 bg-background px-4 py-3 sm:-mx-6 sm:px-6 md:-mt-8">
-        <div className="flex justify-start">
-          <Link
-            href={product ? `/products/${product.id}` : "/products"}
-            aria-label="Cancelar"
-            className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-text-secondary shadow-card transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-primary sm:w-auto sm:gap-1 sm:pr-4 sm:pl-2.5 sm:text-base sm:font-semibold"
-          >
-            <Icon name="x" className="size-5 sm:hidden" strokeWidth={2.4} />
-            <Icon name="chevron-left" className="hidden size-5 sm:block" strokeWidth={2.4} />
-            <span className="hidden sm:inline">Cancelar</span>
-          </Link>
-        </div>
-        <h1 className="min-w-0 truncate text-center text-lg font-bold tracking-tight sm:text-xl">
-          {isEdit ? "Editar producto" : "Nuevo producto"}
-        </h1>
-        <div className="flex justify-end">
-          <SubmitButton
-            pendingLabel={isEdit ? "Guardando…" : "Creando…"}
-            variant="soft"
-            className="min-h-11 shrink-0 rounded-full px-5 text-base"
-          >
-            {isEdit ? "Guardar" : "Crear"}
-          </SubmitButton>
-        </div>
-      </header>
+      <FormHeader
+        title={isEdit ? "Editar producto" : "Nuevo producto"}
+        cancelHref={product ? `/products/${product.id}` : "/products"}
+        submitLabel={isEdit ? "Guardar" : "Crear"}
+        pendingLabel={isEdit ? "Guardando…" : "Creando…"}
+      />
 
       {state.error && (
         <p role="alert" className="flex items-start gap-2 rounded-control bg-danger-soft px-3.5 py-3 text-sm font-medium text-danger">
