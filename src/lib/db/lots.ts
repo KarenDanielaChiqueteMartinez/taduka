@@ -57,6 +57,21 @@ export async function createLot(storeId: string, input: LotInput): Promise<strin
   return id;
 }
 
+// Crea varios lotes a la vez (nota de remisión): todos o ninguno. Cada lote recibe su código
+// del disparador lots_bi; la FK compuesta impide ligarlos a productos de otra tienda.
+export async function createLots(storeId: string, inputs: LotInput[]): Promise<number> {
+  return transaction(async (tx) => {
+    for (const input of inputs) {
+      await tx.exec(
+        `INSERT INTO lots (id, store_id, product_id, supplier_lot_code, entry_date, expiration_date, initial_quantity)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [newId(), storeId, input.productId, input.supplierLotCode ?? null, input.entryDate, input.expirationDate, input.quantity],
+      );
+    }
+    return inputs.length;
+  });
+}
+
 // --- Movimientos de existencias (conteo, ajuste, baja): único camino para cambiar la existencia ---
 
 export class DomainError extends Error {

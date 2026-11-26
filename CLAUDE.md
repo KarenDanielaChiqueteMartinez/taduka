@@ -19,7 +19,9 @@ Next.js (App Router), TypeScript, Tailwind CSS, MariaDB en alwaysdata (`mysql2` 
 ## Alcance actual
 Interfaces responsive y conexión real con MariaDB: autenticación, dashboard, productos, lotes y movimientos de inventario.
 
-OCR, IA, notificaciones automáticas, pagos y sincronización offline quedan fuera de esta etapa.
+Se incluye la lectura (OCR) de notas de remisión, gratuita y hecha en el navegador (Tesseract.js): la foto no se envía ni se guarda, todo se revisa antes de guardar y las fechas de caducidad se capturan a mano.
+
+IA externa de pago, notificaciones automáticas, pagos y sincronización offline quedan fuera de esta etapa.
 
 ## Forma de trabajo
 Primero inspecciona el entorno y el proyecto. Propón el siguiente paso concreto y espera confirmación cuando una decisión afecte la arquitectura. Antes de crear las tablas, presenta el esquema relacional para aprobación.
