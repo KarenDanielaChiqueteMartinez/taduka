@@ -39,6 +39,36 @@ test("por posición: solo productos, sin proveedor, precios, notas ni firmas", (
   ]);
 });
 
+test("nota real de carnicería (letra manuscrita): solo sus 3 productos", () => {
+  // Renglones tal como los entregó PaddleOCR con lectura por caja sobre una foto real.
+  const real: OcrBox[][] = [
+  [box("CARNICERIA", 323, 48, 454, 55), box("FOLIO", 850, 48, 131, 30)],
+  [box("2", 194, 147, 20, 19)],
+  [box("气", 136, 160, 15, 18)],
+  [box("王AFA在A", 249, 129, 593, 114), box("251126", 840, 159, 164, 43), box("FECHA", 843, 124, 154, 36)],
+  [box("Sixto Guillermo Mera Sánchez", 166, 250, 774, 43)],
+  [box("RFC: MESS680806 923", 273, 295, 551, 38)],
+  [box("victormera28@yahoo.com.mx", 229, 338, 646, 42)],
+  [box("Cel. (442) 3 19 90 51, (442) 3 30 90 49", 257, 392, 621, 42)],
+  [box("Tel.2 98 00 26,4 55 20 25", 306, 446, 520, 38)],
+  [box("Av. de la Piedra No. 902, Col. Satélite, C.P. 76110, Querétaro, Qro.", 100, 494, 910, 38)],
+  [box("SR. (A) Karen Daniela Chiavete Mtz.", 93, 557, 850, 55)],
+  [box("CANT.", 92, 630, 135, 43), box("ARTICULO", 303, 634, 226, 38), box("PRECIO", 623, 634, 172, 38), box("IMPORTE", 803, 634, 184, 38)],
+  [box("1", 128, 675, 53, 54), box("Milanesa de res", 237, 684, 329, 43), box("$180.00", 628, 683, 158, 42), box("$180.00", 807, 684, 167, 42)],
+  [box("0.750", 98, 738, 114, 43), box("Carne molida", 236, 735, 292, 47), box("$140.00", 625, 734, 163, 47), box("$105.00", 805, 735, 170, 43)],
+  [box("1", 132, 782, 53, 50), box("Chuleta de puerco", 230, 788, 368, 48), box("$130.00", 626, 790, 160, 42), box("$130.00", 801, 789, 176, 43)],
+  [box("DEBO(EMOS) Y PAGARE(MOS) INCONDICIONALMENTE A LA ORDEN DE", 97, 1161, 498, 23), box("SIXTO GUILLERMO MERA SÁNCHEZ A LA VISTA LA CANTIDAD SEÑALADA", 97, 1178, 512, 23), box("SUBTOTAL", 621, 1159, 170, 35), box("$415.00", 805, 1159, 172, 47)],
+  [box("EL IMPORTE DE MERCANCIAS RECIBIDAS DE CONFORMIDAD SI NO FUERE", 97, 1194, 521, 24)],
+  [box("PAGADA A SU VENCIMIENTO, CAUSARÁ INTERESES MORATORIOS", 97, 1216, 467, 19)],
+  [box("FIRMA.", 92, 1248, 70, 26), box("DEL", 93, 1231, 50, 26), box("%.", 163, 1233, 34, 23), box("TOTAL", 644, 1231, 123, 42), box("$415.00", 804, 1221, 178, 47)],
+  ];
+  assert.deepEqual(parseNoteRows(real), [
+    { description: "Milanesa de res", quantity: 1 },
+    { description: "Carne molida", quantity: 0.75 },
+    { description: "Chuleta de puerco", quantity: 1 },
+  ]);
+});
+
 test("por posición: sin encabezado de tabla devuelve null para usar la lectura de texto", () => {
   assert.equal(parseNoteRows([[box("12 Yogur Fresa 145 g", 60, 100)], [box("$9.50", 600, 100)]]), null);
 });

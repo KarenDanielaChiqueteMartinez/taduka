@@ -94,7 +94,7 @@ export type OcrBox = { text: string; x: number; y: number; width: number; height
 const HEADER_WORDS = /\b(cant|cantidad|descripcion|producto|articulo|precio|importe|unidad|clave|codigo|p\.? ?unit)\b/gi;
 const PRICE_HEADER = /\b(precio|p\.? ?unit(?:ario)?|importe|costo|monto)\b/i;
 const QTY_DESC_HEADER = /\b(cant|cantidad|descripcion|producto|articulo)\b/i;
-const END_OF_TABLE = /^\s*(sub ?total|total|importe total|suma|iva|i\.v\.a|resumen|observaciones|nota)\b/i;
+const END_OF_TABLE = /^\s*(sub ?total|total|importe total|suma|iva|i\.v\.a|resumen|observaciones)\b/i;
 // Solo montos: "$9.50", "$114.00 $240.00", "$994.50".
 const MONEY_ONLY = /^[\s$]*\d{1,6}(?:[.,]\d{2})?(?:\s+[$]?\s*\d{1,6}(?:[.,]\d{2})?)*\s*$/;
 
@@ -129,8 +129,8 @@ export function parseNoteRows(rows: OcrBox[][]): NoteLine[] | null {
   // 3. Renglones de la tabla: debajo del encabezado y hasta el total.
   const body: string[] = [];
   for (const row of rows.slice(headerIndex + 1)) {
-    const rowText = row.map((b) => b.text).join(" ");
-    if (END_OF_TABLE.test(plain(rowText))) break;
+    // El total puede compartir renglón con texto legal: se revisa cada cuadro, no solo el inicio.
+    if (row.some((b) => END_OF_TABLE.test(plain(b.text.trim())))) break;
     const kept = row
       .filter((b) => !(priceX !== null && b.x >= priceX))
       .filter((b) => !(MONEY_ONLY.test(b.text.trim()) && hasMoney(b.text)))

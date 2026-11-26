@@ -1,4 +1,4 @@
-import type { PaddleOcrService } from "ppu-paddle-ocr/web";
+import type { PaddleOcrService, PaddleOptions } from "ppu-paddle-ocr/web";
 import type { OcrBox } from "@/lib/inventory/delivery-note";
 
 // Lector de texto (OCR) para notas de remisión. Corre ENTERAMENTE en el navegador con PaddleOCR
@@ -19,7 +19,13 @@ let servicePromise: Promise<PaddleOcrService> | null = null;
 function getService(): Promise<PaddleOcrService> {
   servicePromise ??= (async () => {
     const { PaddleOcrService } = await import("ppu-paddle-ocr/web");
-    const service = new PaddleOcrService();
+    // Lectura "por caja": cada texto detectado se lee por separado. La lectura por línea (la
+    // predeterminada) devolvía vacío en notas con letra manuscrita y tamaños mezclados.
+    // El tipo de la librería exige charactersDictionary, pero en ejecución es opcional: el lector
+    // usa el diccionario de su modelo por defecto.
+    const service = new PaddleOcrService({
+      recognition: { strategy: "per-box", minimumConfidence: 0.4 },
+    } as PaddleOptions);
     await service.initialize();
     return service;
   })().catch((error) => {
