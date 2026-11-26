@@ -62,6 +62,10 @@ test("tolera una letra mal leída y abreviaturas", () => {
   assert.equal(rankProducts("LECH ENTERA 1L", PRODUCTS)[0]?.productId, "p2");
 });
 
+test("separa palabra y medida pegadas por el OCR", () => {
+  assert.equal(similarity("Leche Entera1L", "Leche entera 1 L"), 1);
+});
+
 test("un producto distinto no llega al umbral de preselección", () => {
   const best = rankProducts("DETERGENTE EN POLVO 1 KG", PRODUCTS)[0];
   assert.ok(!best || best.score < AUTO_MATCH_SCORE);

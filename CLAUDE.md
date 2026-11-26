@@ -19,7 +19,7 @@ Next.js (App Router), TypeScript, Tailwind CSS, MariaDB en alwaysdata (`mysql2` 
 ## Alcance actual
 Interfaces responsive y conexión real con MariaDB: autenticación, dashboard, productos, lotes y movimientos de inventario.
 
-Se incluye la lectura (OCR) de notas de remisión, gratuita y hecha en el navegador (Tesseract.js): la foto no se envía ni se guarda, todo se revisa antes de guardar y las fechas de caducidad se capturan a mano.
+Se incluye la lectura (OCR) de notas de remisión, gratuita y hecha en el navegador (PaddleOCR sobre ONNX Runtime Web): la foto no se envía ni se guarda, todo se revisa antes de guardar y las fechas de caducidad se capturan a mano.
 
 IA externa de pago, notificaciones automáticas, pagos y sincronización offline quedan fuera de esta etapa.
 

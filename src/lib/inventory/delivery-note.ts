@@ -94,6 +94,8 @@ function tokensOf(name: string) {
   const text = plain(name)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
+    // El OCR a veces pega palabra y medida ("entera1l"): se separan antes de unir "1 l" -> "1l".
+    .replace(/([a-z]{3,})(\d)/g, "$1 $2")
     // "145 g" / "1 l" se vuelven un solo término: "145g" / "1l".
     .replace(/(\d+)\s+(g|gr|grs|gramos|ml|kg|kgs|lt|lts|l|litro|litros)\b/g, (_m, n: string, u: string) => {
       const unit = u.startsWith("g") ? "g" : u.startsWith("k") ? "kg" : u === "ml" ? "ml" : "l";

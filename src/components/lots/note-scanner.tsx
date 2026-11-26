@@ -56,7 +56,7 @@ export function NoteScanner({ storeName, products, today }: Props) {
   const [state, action] = useActionState<NoteFormState, FormData>(saveNoteLots, {});
 
   const [stage, setStage] = useState<Stage>("capture");
-  const [progress, setProgress] = useState<OcrProgress>({ percent: 0, label: "Preparando el lector…" });
+  const [progress, setProgress] = useState<OcrProgress>({ percent: null, label: "Preparando el lector…" });
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [rawText, setRawText] = useState("");
@@ -87,7 +87,7 @@ export function NoteScanner({ storeName, products, today }: Props) {
     urlRef.current = URL.createObjectURL(file);
     setPreview(urlRef.current);
     setError(null);
-    setProgress({ percent: 0, label: "Preparando el lector…" });
+    setProgress({ percent: null, label: "Preparando el lector…" });
     setStage("reading");
 
     try {
@@ -155,8 +155,10 @@ export function NoteScanner({ storeName, products, today }: Props) {
                   <p className="text-sm font-semibold">{progress.label}</p>
                   <div className="h-2 w-full max-w-xs overflow-hidden rounded-full bg-white/25">
                     <div
-                      className="h-full rounded-full bg-accent transition-[width] duration-200"
-                      style={{ width: `${Math.max(4, progress.percent)}%` }}
+                      className={`h-full rounded-full bg-accent transition-[width] duration-200 ${
+                        progress.percent === null ? "animate-pulse motion-reduce:animate-none" : ""
+                      }`}
+                      style={{ width: progress.percent === null ? "100%" : `${Math.max(4, progress.percent)}%` }}
                     />
                   </div>
                 </div>
