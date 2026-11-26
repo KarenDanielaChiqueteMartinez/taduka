@@ -1,6 +1,47 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { AUTO_MATCH_SCORE, parseNoteText, rankProducts, similarity } from "./delivery-note.ts";
+import {
+  AUTO_MATCH_SCORE,
+  parseNoteRows,
+  parseNoteText,
+  rankProducts,
+  similarity,
+  type OcrBox,
+} from "./delivery-note.ts";
+
+// Renglones como los entrega el OCR (de una foto inclinada): con datos del proveedor arriba,
+// precios en columna aparte, observaciones y firma abajo.
+const box = (text: string, x: number, y: number, width = 300, height = 50): OcrBox => ({ text, x, y, width, height });
+const ROWS: OcrBox[][] = [
+  [box("LACTEOS DEL VALLE S.A. de C.V.", 60, 20, 600)],
+  [box("Dirección: Av. Obregón 123, Culiacán", 60, 80, 700), box("Tel 667 123 4567", 800, 70, 250)],
+  [box("NOTA DE REMISION Folio 004821", 52, 140, 591)],
+  [box("Cliente: Super Azul", 59, 200, 316), box("Fecha: 22/11/2026", 427, 190, 301)],
+  [box("Cant. Descripción", 62, 260, 320), box("Precio Importe", 576, 250, 273)],
+  [box("12 Yogur Fresa 145 g", 66, 330, 388), box("$9.50 $114.00", 581, 320, 267)],
+  [box("10", 68, 410, 68), box("Leche Entera 1L", 145, 400, 288)],
+  [box("$24.00 $240.00", 577, 385, 275)],
+  [box("6", 70, 480, 42), box("Galletas María 170 g", 147, 470, 340), box("$15.50", 590, 460, 120)],
+  [box("Entregar antes de las 8 am", 150, 540, 400)],
+  [box("24", 74, 600, 71), box("Refresco Cola 600 ml", 154, 590, 356)],
+  [box("$14.00 $336.00", 611, 570, 277)],
+  [box("Total", 79, 680, 104), box("$994.50", 580, 670, 147)],
+  [box("Observaciones: favor de revisar caducidades", 60, 750, 700)],
+  [box("3 Recibió: ______________ Firma", 60, 820, 600)],
+];
+
+test("por posición: solo productos, sin proveedor, precios, notas ni firmas", () => {
+  assert.deepEqual(parseNoteRows(ROWS), [
+    { description: "Yogur Fresa 145 g", quantity: 12 },
+    { description: "Leche Entera 1L", quantity: 10 },
+    { description: "Galletas María 170 g", quantity: 6 },
+    { description: "Refresco Cola 600 ml", quantity: 24 },
+  ]);
+});
+
+test("por posición: sin encabezado de tabla devuelve null para usar la lectura de texto", () => {
+  assert.equal(parseNoteRows([[box("12 Yogur Fresa 145 g", 60, 100)], [box("$9.50", 600, 100)]]), null);
+});
 
 const NOTE = `
 REMISIÓN No. 4821

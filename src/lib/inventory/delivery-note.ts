@@ -86,6 +86,61 @@ export function parseNoteText(text: string): NoteLine[] {
   return result;
 }
 
+// --- Lectura por posición (tabla) ---------------------------------------------------------------
+
+// Una palabra o frase detectada por el OCR con su posición en la foto (píxeles).
+export type OcrBox = { text: string; x: number; y: number; width: number; height: number };
+
+const HEADER_WORDS = /\b(cant|cantidad|descripcion|producto|articulo|precio|importe|unidad|clave|codigo|p\.? ?unit)\b/gi;
+const PRICE_HEADER = /\b(precio|p\.? ?unit(?:ario)?|importe|costo|monto)\b/i;
+const QTY_DESC_HEADER = /\b(cant|cantidad|descripcion|producto|articulo)\b/i;
+const END_OF_TABLE = /^\s*(sub ?total|total|importe total|suma|iva|i\.v\.a|resumen|observaciones|nota)\b/i;
+// Solo montos: "$9.50", "$114.00 $240.00", "$994.50".
+const MONEY_ONLY = /^[\s$]*\d{1,6}(?:[.,]\d{2})?(?:\s+[$]?\s*\d{1,6}(?:[.,]\d{2})?)*\s*$/;
+
+function hasMoney(text: string) {
+  return /\$/.test(text) || /\d[.,]\d{2}\b/.test(text);
+}
+
+// Interpreta la nota usando la posición de lo que leyó el OCR, para quedarse SOLO con los
+// productos: ignora lo que está arriba del encabezado de la tabla (proveedor, dirección, folio),
+// lo que está debajo del total (observaciones, firmas) y las columnas de precios e importes.
+// Devuelve null si no encuentra el encabezado de la tabla; entonces conviene usar parseNoteText.
+export function parseNoteRows(rows: OcrBox[][]): NoteLine[] | null {
+  // 1. Encabezado: el primer renglón con al menos dos palabras típicas de encabezado.
+  const headerIndex = rows.findIndex((row) => {
+    const found = new Set(
+      (plain(row.map((b) => b.text).join(" ")).match(HEADER_WORDS) ?? []).map((w) => w.toLowerCase()),
+    );
+    return found.size >= 2;
+  });
+  if (headerIndex < 0) return null;
+
+  // 2. Columna de precios: donde empieza el encabezado "Precio / Importe". Solo sirve si ese
+  //    encabezado es un cuadro aparte del de cantidad y descripción.
+  const priceHeader = rows[headerIndex]
+    .filter((b) => PRICE_HEADER.test(plain(b.text)) && !QTY_DESC_HEADER.test(plain(b.text)))
+    .sort((a, b) => a.x - b.x)[0];
+  const heights = rows.flat().map((b) => b.height).sort((a, b) => a - b);
+  const medianHeight = heights[Math.floor(heights.length / 2)] ?? 0;
+  // Holgura por si la foto está inclinada y la columna se corre un poco.
+  const priceX = priceHeader ? priceHeader.x - medianHeight * 2 : null;
+
+  // 3. Renglones de la tabla: debajo del encabezado y hasta el total.
+  const body: string[] = [];
+  for (const row of rows.slice(headerIndex + 1)) {
+    const rowText = row.map((b) => b.text).join(" ");
+    if (END_OF_TABLE.test(plain(rowText))) break;
+    const kept = row
+      .filter((b) => !(priceX !== null && b.x >= priceX))
+      .filter((b) => !(MONEY_ONLY.test(b.text.trim()) && hasMoney(b.text)))
+      .sort((a, b) => a.x - b.x)
+      .map((b) => b.text);
+    if (kept.length > 0) body.push(kept.join(" "));
+  }
+  return parseNoteText(body.join("\n"));
+}
+
 // --- Enlace con los productos de la tienda ----------------------------------------------------
 
 const STOPWORDS = new Set(["de", "del", "la", "el", "los", "las", "con", "sin", "y", "en", "para", "por", "pza", "pzas", "pieza", "piezas", "caja", "cajas", "paq"]);

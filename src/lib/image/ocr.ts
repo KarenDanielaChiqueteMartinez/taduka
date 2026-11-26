@@ -1,4 +1,5 @@
 import type { PaddleOcrService } from "ppu-paddle-ocr/web";
+import type { OcrBox } from "@/lib/inventory/delivery-note";
 
 // Lector de texto (OCR) para notas de remisión. Corre ENTERAMENTE en el navegador con PaddleOCR
 // (modelos PP-OCRv6 sobre ONNX Runtime Web): es gratis y la foto no sale del dispositivo. La
@@ -50,17 +51,24 @@ async function toCanvas(file: File): Promise<HTMLCanvasElement> {
 // El modelo no admite dos lecturas a la vez ("Session already started"): se hacen en fila.
 let queue: Promise<unknown> = Promise.resolve();
 
-// Devuelve el texto reconocido de la foto de una nota, un renglón por línea.
-export function readNoteText(
+// Texto reconocido de la foto de una nota y las palabras agrupadas por renglón con su posición.
+export type OcrResult = { text: string; rows: OcrBox[][] };
+
+export function readNote(
   file: File,
   onProgress?: (progress: OcrProgress) => void,
-): Promise<string> {
+): Promise<OcrResult> {
   const run = async () => {
     onProgress?.({ percent: null, label: "Preparando el lector (la primera vez descarga unos MB)…" });
     const [canvas, service] = await Promise.all([toCanvas(file), getService()]);
     onProgress?.({ percent: null, label: "Leyendo la nota…" });
     const result = await service.recognize(canvas);
-    return result.text;
+    return {
+      text: result.text,
+      rows: result.lines.map((row) =>
+        row.map((b) => ({ text: b.text, x: b.box.x, y: b.box.y, width: b.box.width, height: b.box.height })),
+      ),
+    };
   };
   const next = queue.then(run, run);
   queue = next.catch(() => undefined);

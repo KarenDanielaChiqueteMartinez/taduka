@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { saveNoteLots, type NoteFormState } from "@/lib/lots/note-actions";
-import { readNoteText, type OcrProgress } from "@/lib/image/ocr";
-import { AUTO_MATCH_SCORE, parseNoteText, rankProducts } from "@/lib/inventory/delivery-note";
+import { readNote, type OcrProgress } from "@/lib/image/ocr";
+import { AUTO_MATCH_SCORE, parseNoteRows, parseNoteText, rankProducts } from "@/lib/inventory/delivery-note";
 import { FormHeader } from "@/components/app/form-header";
 import { ScreenHeader } from "@/components/app/screen-header";
 import { buttonClass } from "@/components/ui/button";
@@ -91,10 +91,14 @@ export function NoteScanner({ storeName, products, today }: Props) {
     setStage("reading");
 
     try {
-      const [text] = await Promise.all([readNoteText(file, setProgress), sleep(MIN_READ_MS)]);
+      const [{ text, rows }] = await Promise.all([readNote(file, setProgress), sleep(MIN_READ_MS)]);
       setRawText(text);
+      // Por posición: solo los renglones de la tabla de productos, sin precios, notas ni firmas.
+      // Si la nota no trae encabezado de tabla, se interpreta el texto corrido.
+      const byLayout = parseNoteRows(rows);
+      const found = byLayout && byLayout.length > 0 ? byLayout : parseNoteText(text);
       setLines(
-        parseNoteText(text).map((parsed) => {
+        found.map((parsed) => {
           const best = rankProducts(parsed.description, products, 1)[0];
           return {
             key: crypto.randomUUID(),
